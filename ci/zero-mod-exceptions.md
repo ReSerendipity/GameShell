@@ -72,6 +72,7 @@
 - 放行判定是「变更类型 + 路径」的**全文精确匹配**：不支持通配、前缀或目录级登记；
 - 理由与日期缺任一字段、或任何一行无法解析，**整表按损坏拒绝**（fail-closed，exit 2）；
 - 重命名（`R*`）等复合状态没有可登记的类型，一律按未登记处理；
+- 例外登记的任何增删改必须经 PR 合入；直推 `main`（push 事件且 HEAD 不是 GitHub PR 合并提交）会被守卫拒绝（fail-closed）；
 - 不存在任何全局跳过开关。
 
 ```zero-mod-allow
@@ -84,6 +85,7 @@ M app/src/main/res/values/strings.xml | About 入口已移除（21c7e46d），�
 2. 新增例外须在此写明：改动内容、依据的本仓提交、为什么不能放到 `com.winlator.galgame` 新包或新资源文件里。
 3. 已登记的例外在 rebase 时会重新出现于差异中，这是预期结果；若校验把它当新违规拦下，比对口径见上"触发口径"。
 4. 想让守卫放行受守卫路径的变更，必须同时在上面 `zero-mod-allow` 块登记（类型+路径+理由+日期齐全），并在本地用 `ZERO_MOD_BASE=<基线> bash ci/check-zero-mod.sh` 自测放行与拦截两侧行为。
+5. **例外登记必须经 PR 合入**：`zero-mod-allow` 块的任何增删改只能在 PR 分支提交；守卫在 push 事件上只接受 GitHub 的 PR 合并提交（双亲 + `Merge pull request #N from …`），直推 `main`、手工 merge 或 squash merge 一律拒绝（fail-closed）。
 
 ## 重新派生上述事实
 
