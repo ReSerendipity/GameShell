@@ -13,9 +13,8 @@
 
 为什么不再产出各密度 mipmap PNG（2026-11-01 精简）：
 - minSdk 30 起 `mipmap-anydpi-v26` 恒定匹配，密度位图在系统里永远取不到。
-- 原先三处引用实测全部走不到：`layout/about_dialog.xml`（宿主 MainActivity 已非 launcher、
-  无人 start）、桌面快捷方式（只在游戏 exe 图标提取失败时才回落到 R.mipmap.ic_launcher）、
-  以及 manifest 的 android:icon（被 anydpi-v26 抢占）。
+- 原先三处引用均已失效：About 对话框已删除；桌面快捷方式（只在游戏 exe 图标提取失败时
+  才回落到 R.mipmap.ic_launcher）与 manifest 的 android:icon（被 anydpi-v26 抢占）实测走不到。
 - 与 DraftPeek 同构：工程内只留矢量，另存一份 512 位图作商店/文档素材。
 
 本脚本现在只产出两样：

@@ -88,7 +88,6 @@
     <string name="touchpad_help_main_menu_title">Главное меню</string>
     <string name="touchpad_help_main_menu_description">Нажмите четырьмя пальцами</string>
     <string name="duplicate">Дублировать</string>
-    <string name="about">О программе</string>
     <string name="credits_and_third_party_apps">Авторы и сторонние приложения</string>
     <string name="external_controllers">Внешние контроллеры</string>
     <string name="graphics_driver">Графический драйвер</string>

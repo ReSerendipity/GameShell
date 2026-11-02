@@ -93,7 +93,6 @@
     <string name="touchpad_help_main_menu_title">主菜单</string>
     <string name="touchpad_help_main_menu_description">四指同时短按</string>
     <string name="duplicate">复制</string>
-    <string name="about">关于</string>
     <string name="credits_and_third_party_apps">致谢与第三方应用</string>
     <string name="external_controllers">外接控制器</string>
     <string name="graphics_driver">图形驱动</string>
