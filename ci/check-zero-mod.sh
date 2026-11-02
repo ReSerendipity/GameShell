@@ -12,6 +12,11 @@
 # 用法（本地，仓库根）：
 #     ZERO_MOD_BASE=<base sha> bash ci/check-zero-mod.sh
 # CI 由 .github/workflows/ci.yml 传入 GH_EVENT / EVENT_BEFORE / PR_BASE_SHA。
+#
+# 2026-11-02 起支持「登记例外」放行：唯一放行来源是 ci/zero-mod-exceptions.md 内的
+# zero-mod-allow 围栏块，按「变更类型 + 路径」精确匹配；理由/日期缺一、任何一行无法
+# 解析、或围栏未闭合/重复出现，一律按登记损坏拒绝（exit 2，fail-closed）。不提供任何
+# 全局跳过开关，也不读取任何环境变量开关。格式说明见该文件对应章节。
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
@@ -62,10 +67,90 @@ echo "$CHANGED"
 HIT_COUNT="$(grep -Ec "$FORBIDDEN" <<< "$CHANGED" || true)"
 
 if [ "${HIT_COUNT:-0}" -gt 0 ]; then
-  echo "::error::FAIL 零改铁律：${HIT_COUNT} 个官方核心文件在本次范围被修改（violation of zero-modification rule）" >&2
-  echo "::error::先核对既有登记：ci/zero-mod-exceptions.md；未登记的官方文件改动一律不接受。" >&2
-  grep -En "$FORBIDDEN" <<< "$CHANGED" | sed 's/^/  命中: /' >&2
-  exit 1
+  # ── 登记例外放行（fail-closed，勿放宽）─────────────────────────────────────
+  # 唯一放行来源：ci/zero-mod-exceptions.md 的 zero-mod-allow 围栏块，一行一条：
+  #     <A|M|D> <路径> | <理由> | <日期 YYYY-MM-DD>
+  # 规则：
+  #   1. 「变更类型 + 路径」与某条登记完全一致才放行该命中；无通配/前缀/目录级匹配。
+  #   2. 理由与日期缺任一字段、任何一行无法解析、围栏未闭合或重复出现 → 整表按
+  #      登记损坏拒绝（exit 2，fail-closed，绝不静默放行）。
+  #   3. 重命名（R*）/复制（C*）等复合状态没有可登记类型，一律按未登记处理。
+  #   4. 不提供全局跳过开关，也不读取任何环境变量开关。
+  REGISTRY="ci/zero-mod-exceptions.md"
+
+  if [ ! -f "$REGISTRY" ]; then
+    echo "::error::FAIL 零改铁律：${HIT_COUNT} 个官方核心文件在本次范围被修改（violation of zero-modification rule）" >&2
+    echo "::error::例外登记 ${REGISTRY} 缺失，无任何放行依据。" >&2
+    grep -En "$FORBIDDEN" <<< "$CHANGED" | sed 's/^/  命中: /' >&2
+    exit 1
+  fi
+
+  # 提取围栏块；未闭合 / 重复出现均视为登记表损坏
+  if ! ALLOW_BLOCK="$(awk '
+        /^```zero-mod-allow$/ { if (inblock) bad = 1; inblock = 1; next }
+        inblock && /^```$/    { inblock = 0; next }
+        inblock               { print }
+        END                   { if (bad || inblock) exit 3 }
+      ' "$REGISTRY" 2>/dev/null)"; then
+    echo "::error::零改例外登记（zero-mod-allow 围栏块）未闭合或重复出现，按登记损坏拒绝（fail-closed）。" >&2
+    exit 2
+  fi
+
+  # 逐行严格解析；出现任何无法解析的行 → 整表失效（fail-closed）
+  ENTRY_RE='^([AMD])[[:space:]]+([^[:space:]]+)[[:space:]]*\|[[:space:]]*([^|]*[^[:space:]][^|]*)[[:space:]]*\|[[:space:]]*([0-9]{4}-[0-9]{2}-[0-9]{2})[[:space:]]*$'
+  ALLOW_KEYS=""
+  MALFORMED=""
+  while IFS= read -r entry; do
+    case "$entry" in
+      ''|'#'*) continue ;;  # 允许空行与 # 注释行
+    esac
+    if ! [[ "$entry" =~ $ENTRY_RE ]]; then
+      MALFORMED="${MALFORMED}${entry}
+"
+      continue
+    fi
+    ALLOW_KEYS="${ALLOW_KEYS}${BASH_REMATCH[1]} ${BASH_REMATCH[2]}
+"
+  done <<< "$ALLOW_BLOCK"
+
+  if [ -n "$MALFORMED" ]; then
+    echo "::error::零改例外登记（zero-mod-allow 块）存在无法解析的行，整表按损坏拒绝（fail-closed）：" >&2
+    printf '%s' "$MALFORMED" | sed 's/^/  无法解析: /' >&2
+    echo "::error::格式：<A|M|D> <路径> | <理由> | <日期 YYYY-MM-DD>；字段缺一不可，字段内不得含 |。" >&2
+    exit 2
+  fi
+
+  # 命中路径与登记键逐一精确比对（重命名的状态是 R100 之类，永不匹配 A|M|D 键）
+  VIOLATIONS=""
+  ALLOWED_HITS=""
+  while IFS=$'\t' read -r st rest; do
+    [ -n "$st" ] || continue
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      if [[ "$p" =~ $FORBIDDEN ]]; then
+        if printf '%s\n' "$ALLOW_KEYS" | grep -Fxq -- "${st} ${p}"; then
+          ALLOWED_HITS="${ALLOWED_HITS}${st} ${p}
+"
+        else
+          VIOLATIONS="${VIOLATIONS}${st} ${p}
+"
+        fi
+      fi
+    done <<< "${rest//$'\t'/$'\n'}"
+  done < <(git diff --name-status "$BASE" HEAD)
+
+  if [ -n "$VIOLATIONS" ]; then
+    echo "::error::FAIL 零改铁律：以下官方核心文件变更未在 zero-mod-allow 登记中精确匹配（路径+变更类型）：" >&2
+    printf '%s' "$VIOLATIONS" | sed 's/^/  未放行: /' >&2
+    echo "::error::登记与格式见 ci/zero-mod-exceptions.md；未登记的官方文件改动一律不接受。" >&2
+    exit 1
+  fi
+
+  if [ -n "$ALLOWED_HITS" ]; then
+    printf '%s' "$ALLOWED_HITS" | sed 's/^/  已放行（登记例外）: /'
+  fi
+  echo "[zero-mod] OK 零改铁律通过（命中均已与 zero-mod-allow 登记精确匹配）"
+  exit 0
 fi
 
 echo "[zero-mod] OK 零改铁律通过（已比对 $(grep -c '' <<< "$CHANGED") 个变更文件）"

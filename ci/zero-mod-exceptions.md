@@ -8,6 +8,7 @@
 此前该登记只存在于被 `.gitignore` 排除的 `docs/`（克隆后为空），改前核对无法执行。
 
 - 校验实现：`ci/check-zero-mod.sh`（CI `rebase-guard` 与本地共用同一份）
+- 机器放行：守卫**只解析**下方「机器可读放行登记」节的 `zero-mod-allow` 围栏块；本文件其余文字（含本节表格）只是人类可读背景，不参与放行判定
 - 触发口径：校验比较的是**推送/PR 范围内的改动文件**，因此"历史既有差异"不会被本次范围重新判定
 - 基线事实由 git 派生，不靠记忆抄写；重新派生命令见文末
 
@@ -20,7 +21,7 @@
 |---|---|---|
 | `app/src/main/java/com/winlator/container/Container.java` | 与 upstream 一致 | 无例外，任何改动都应拦下 |
 | `app/src/main/java/com/winlator/core/LocaleHelper.java` | `supportedLocales` 追加 `"zh_CN"`（+1 −1） | **已登记例外**：简体中文界面所需，`AGENTS.md` 称 A7，源自 b2b9e3e（2026-09-24）；rebase 时该差异会重新出现在推送范围里，属预期 |
-| `app/src/main/res/values/strings.xml` | ① `app_name` Winlator → GameShell 并加一行注释；② 删除条目 `native_resolution` | ① **已登记例外**：品牌化所需，源自 1bf0011（2026-09-27）；2026-11-02 仓库改名同步为 GameShell（b78ce0a8），仍仅动 `app_name` 一行；② **rebase 阻断项，见下节** |
+| `app/src/main/res/values/strings.xml` | ① `app_name` Winlator → GameShell 并加一行注释；② 删除条目 `native_resolution`；③ 删除零引用条目 `about`（2026-11-02，zero-mod-allow 登记） | ① **已登记例外**：品牌化所需，源自 1bf0011（2026-09-27）；2026-11-02 仓库改名同步为 GameShell（b78ce0a8），仍仅动 `app_name` 一行；② **rebase 阻断项，见下节**；③ About 入口已移除（21c7e46d），字符串全仓零引用 |
 | `app/src/main/java/com/winlator/core/DefaultVersion.java` | `BOX64` 常量 `"0.4.4"` → `"0.4.5"`（+1 −1） | **已登记例外**：本仓库自建 box64 的版本号，源自 ca5d411（0.4.5 build + mpshim heal shim）。上游文件，日后移植官方改动时必冲突，属预期。它同时是 `tools/prepare_box64_lib.sh` 缺省打包哪份 tzst 的**唯一真源**——改这个值等于改构建默认，需与 `assets/box64/` 下实际存在的 tzst 对齐 |
 
 ## ② `native_resolution` 的删除：现在安全，rebase 后会破
@@ -60,11 +61,29 @@
 > 这是本仓库**第一处**对 Winlator 组件原生 C 的改动——此前对组件的改动全部落在
 > Java / 资源层。rebase 时该文件若被上游改动，冲突需人工合并。
 
+## 机器可读放行登记（check-zero-mod.sh 只认这一节）
+
+守卫在推送范围内命中受守卫路径时，读取下面 `zero-mod-allow` 围栏块做精确匹配；块不存在
+即无任何放行。登记格式（一行一条，字段以 ` | ` 分隔，字段内不得再含 `|`）：
+
+    <A|M|D> <路径> | <理由> | <日期 YYYY-MM-DD>
+
+- `A`/`M`/`D` 必须与 `git diff --name-status` 的净变更类型一致（新增/修改/删除）；
+- 放行判定是「变更类型 + 路径」的**全文精确匹配**：不支持通配、前缀或目录级登记；
+- 理由与日期缺任一字段、或任何一行无法解析，**整表按损坏拒绝**（fail-closed，exit 2）；
+- 重命名（`R*`）等复合状态没有可登记的类型，一律按未登记处理；
+- 不存在任何全局跳过开关。
+
+```zero-mod-allow
+M app/src/main/res/values/strings.xml | About 入口已移除（21c7e46d），字符串全仓零引用，删除死条目 | 2026-11-02
+```
+
 ## 改动规则
 
 1. 触碰上表任一路径前，先在本文件核对是否已有登记；没有登记即视为不接受。
 2. 新增例外须在此写明：改动内容、依据的本仓提交、为什么不能放到 `com.winlator.galgame` 新包或新资源文件里。
 3. 已登记的例外在 rebase 时会重新出现于差异中，这是预期结果；若校验把它当新违规拦下，比对口径见上"触发口径"。
+4. 想让守卫放行受守卫路径的变更，必须同时在上面 `zero-mod-allow` 块登记（类型+路径+理由+日期齐全），并在本地用 `ZERO_MOD_BASE=<基线> bash ci/check-zero-mod.sh` 自测放行与拦截两侧行为。
 
 ## 重新派生上述事实
 
