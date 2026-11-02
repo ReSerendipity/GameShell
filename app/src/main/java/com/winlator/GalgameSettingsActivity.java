@@ -136,7 +136,7 @@ public class GalgameSettingsActivity extends AppCompatActivity {
                                 + "抖音  https://www.douyin.com/user/MS4wLjABAAAAcEdOoxVlfk3Ulx_usqR-3PHW4xxp6wYzRmsuRI_-fHBigPETTKLsv4fknIpFq6sP")
                         .setPositiveButton(R.string.galgame_ok, null)
                         .show());
-itchCompat dev = findViewById(R.id.SWDevMode);
+        SwitchCompat dev = findViewById(R.id.SWDevMode);
         boolean devOn = prefs.getBoolean("galgame_dev_mode", false);
         dev.setChecked(devOn);
         applyDev(devOn);
