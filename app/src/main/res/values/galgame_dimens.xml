@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 设计系统：间距 / 圆角 token（R1）。
+  GameShell 设计系统：间距 / 圆角 token（R1）。
   间距梯度 4–32dp；圆角 16/20/24。弃用上游随屏各造的魔数。
 -->
 <resources>

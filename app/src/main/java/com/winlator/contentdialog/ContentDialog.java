@@ -33,7 +33,7 @@ public class ContentDialog extends Dialog {
     }
 
     public ContentDialog(@NonNull Context context, int layoutResId) {
-        // GalgameShell R4：Swiss 深色档靠 values-night 反相同一批颜色，
+        // GameShell R4：Swiss 深色档靠 values-night 反相同一批颜色，
         // 不再另走一套紫色对话框主题（否则暗档又退回圆角紫）。
         super(context, R.style.ContentDialog);
         contentView = LayoutInflater.from(context).inflate(R.layout.content_dialog, null);

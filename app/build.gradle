@@ -57,7 +57,7 @@ android {
         checkReleaseBuilds false
     }
 
-    // GalgameShell: aapt2 默认 ignore 模式含 <dir>_*，会从 assets 剔除下划线开头的
+    // GameShell: aapt2 默认 ignore 模式含 <dir>_*，会从 assets 剔除下划线开头的
     // 目录——CPython 标准库的 zipfile/_path/ 因此进不了 APK（文件名以 _ 开头不受影响）。
     // 此处照抄默认项、仅去掉 <dir>_*。
     androidResources {

@@ -1,6 +1,6 @@
 # 原生引擎内嵌方案（Native Engine Embedding）
 
-> 目标：把「识别到某引擎 → 用该引擎的原生运行时直接跑」这条链路做进 **GalgameShell 自身 APK**，
+> 目标：把「识别到某引擎 → 用该引擎的原生运行时直接跑」这条链路做进 **GameShell 自身 APK**，
 > 而不是再安装一个第三方播放器 APK（用户明确否决：独立 APK 的方式不要）。
 >
 > 状态：**Ren'Py 引擎已端到端跑通**——APK 内嵌 `librenpython.so`（Python 3.12.8 + Ren'Py 8.5.3），
@@ -201,7 +201,7 @@ adb -s $SER shell sh /data/local/tmp/krkr_diag.sh /sdcard/Games/bosei2 480
 adb -s $SER pull /sdcard/krkr_diag ./krkr_diag_out
 ```
 
-> 重要：KR2Activity 是 `exported=false`，**不能**用 `am start` 直启，必须由「GalgameShell 游戏库点开游戏」
+> 重要：KR2Activity 是 `exported=false`，**不能**用 `am start` 直启，必须由「GameShell 游戏库点开游戏」
 > 触发（KrkrEngine.launch 写 recentpath.xml + startActivity）。脚本的 run-as 写入是兜底。
 
 ## 4.3 端到端打通实录（2026-10-04，真机 dc57ebe3）✅
@@ -404,7 +404,7 @@ Activity（同 `KrkrEngine` 风格），故留在门禁内。
 | 2 | `files/main.py` 不存在/是空目录，整树只剩空目录 | **`AssetManager.list()` 对文件返回空数组而非 null**；以 `null` 判文件把顶层文件误当空目录 `mkdir` | `copyAssetTree` 改为「子项数>0 判目录；空数组先试按文件复制，失败再按空目录建」+ `ENGINE_VERSION` bump 强制重解包 | 设备 `files/main.py` 2679B 真实文件 |
 | 3 | `SDL_main` ~4ms 静默退出、logcat **零 Python 输出** | **CPython 标准库缺失**：`PYTHONHOME`=`filesDir` 时解释器要 `filesDir/lib/python3.12/`；解包树里只有 `renpy/`、`lib/{android,jnius}`、`main.py` → `import os` 即 ImportError（stderr 未接 logcat 故无输出） | 从 `renpy-sdk.zip` 抽 `lib/python3.12/**`（833 个 `.pyc`）进 `assets/renpy-engine/lib/python3.12/`；黑名单只排 `android`/`jnius`（已在 `lib/` 顶层）与 Windows 版 `lib-dynload`；每个 `.pyc` 的 flags 由 1（hash-checked，需源文件）翻成 **2（hash-unchecked，免源校验）**——与真实 Ren'Py Android 产物一致 | Python 回溯开始出现在 logcat |
 | 4 | `AttributeError: module '__main__' has no attribute 'path_to_gamedir'`（bootstrap.py:334） | **启动器契约缺失**：`renpy.bootstrap`/`renpy.main` 经 `renpy.__main__` 回调 6 个 `path_to_*` 函数；SDK 官方启动器 `renpy.py` 在 `main()` 里显式 `renpy.__main__ = sys.modules[__name__]`，我们的 main.py 既没定义函数也没绑定 | 重写 `assets/renpy-engine/main.py` 为官方启动器同构：定义 `path_to_gamedir`/`path_to_common`/`path_to_saves`/`path_to_logdir`/`predefined_searchpath`/`path_to_renpy_base` + bootstrap 前 `renpy.__main__ = sys.modules[__name__]` | bootstrap 推进到 `renpy.import_all()` |
-| 5 | `ModuleNotFoundError: No module named 'zipfile._path'`（APK 里 457 缺 2） | **aapt2 默认 ignore 模式含 `<dir>_*`**，assets 里下划线开头的**目录**被剔除（下划线开头的**文件**不受影响）——`zipfile/_path/` 整目录进不了 APK | `app/build.gradle` 覆盖 `androidResources.ignoreAssetsPattern`（照抄默认项、仅去掉 `<dir>_*`，`// GalgameShell:` 标记） | APK stdlib 条目 455→457，import 通过 |
+| 5 | `ModuleNotFoundError: No module named 'zipfile._path'`（APK 里 457 缺 2） | **aapt2 默认 ignore 模式含 `<dir>_*`**，assets 里下划线开头的**目录**被剔除（下划线开头的**文件**不受影响）——`zipfile/_path/` 整目录进不了 APK | `app/build.gradle` 覆盖 `androidResources.ignoreAssetsPattern`（照抄默认项、仅去掉 `<dir>_*`，`// GameShell:` 标记） | APK stdlib 条目 455→457，import 通过 |
 | 6 | `No module named 'ecdsa'`（savetoken.py:26）、`No module named 'renpy.test'`（`__init__.py:572`） | 抽取黑名单误伤 Ren'Py 自带依赖（ecdsa/requests 等在 SDK 的 `lib/python3.12/` 内）；引擎提取时漏 `renpy/test/` 全包（20 文件） | 黑名单收窄为 `android`/`jnius`/`lib-dynload` 三项；按 SDK↔本地全量对账补齐 `renpy/test/` | 依赖全部解析，进入 `renpy.main.main()` |
 
 #### 最终证据链（round 9+）
@@ -413,7 +413,7 @@ Activity（同 `KrkrEngine` 风格），故留在门禁内。
   `Interface start took 153 ms` → `Total time until interface ready: 1.10s` → `Hid presplash.`
 - `topResumedActivity = com.winlator/.renpy.RenPyActivity`（前台）
 - 截图 `.workbuddy/verify/renpy_final.png`：真实 Ren'Py 8.5.3 游戏画面——测试游戏
-  `script.rpy` 首句对话 **"GalgameShell built-in Ren'Py engine is running."** 渲染于自绘
+  `script.rpy` 首句对话 **"GameShell built-in Ren'Py engine is running."** 渲染于自绘
   `screen say` 对话框（另有 `renpy_shot5.png` 为引擎自带异常界面，同样证明 SDL 渲染链路通）。
 - 版本角标 `1.0 / 8.5.3.26051504 / Android`（Ren'Py 渲染，证明字体/样式/文本布局链路全通）。
 
@@ -448,7 +448,7 @@ Activity（同 `KrkrEngine` 风格），故留在门禁内。
 #### E2E 证据链（修复后回归，dc57ebe3）
 
 1. 主壳游戏库点 FAB 导入 → 输入 `/sdcard/Android/data/com.winlator/files/Games/testrenpy` → 确定
-2. `logcat`: `GalgameShell: import engine=RENPY route=B gameId=testrenpy`（修复前 UNKNOWN）
+2. `logcat`: `GameShell: import engine=RENPY route=B gameId=testrenpy`（修复前 UNKNOWN）
 3. 内置引擎自动拉起：`SDL onCreate → nativeSetupJNI → Running main function SDL_main from .../librenpython.so`
 4. `python: Interface start took 420 ms` → `Hid presplash.`
 5. `topResumedActivity=com.winlator/.renpy.RenPyActivity`（前台）
@@ -523,7 +523,7 @@ Activity（同 `KrkrEngine` 风格），故留在门禁内。
 
 - 立绘特征色扫描（确认合成的 `heroine.png` 精确渲染）：`school_uniform(44,56,106)` 81306px bbox x[950-1830] y[466-1036]、`face_skin(255,226,205)` 44603px bbox x[1142-1638] y[2-446]、`shirt(238,242,250)` 10452px bbox x[608-1760] y[466-1226]——与 §4.7 图片子系统验证的素材像素特征完全吻合。
 - 全程 logcat 无 `FATAL EXCEPTION` / `SIGSEGV` / `UnsatisfiedLinkError`。
-- 证据截图已复制至 `C:/Users/Doro/Desktop/GalgameShell验证截图/renpy_live_full_screen.png`。
+- 证据截图已复制至 `C:/Users/Doro/Desktop/GameShell验证截图/renpy_live_full_screen.png`。
 
 → **结论**：Ren'Py 内置引擎在真机完整渲染出「渐变背景 + 立绘 + 对话框」游戏画面，非黑屏、非程序错误、非占位灰；集成链路（检测/解包/启动/图片子系统/透明合成）全部实证通过。`exported` 已收回 `false` 并重建重装（§4.5.1 路线 A 收尾）。
 
@@ -540,7 +540,7 @@ Activity（同 `KrkrEngine` 风格），故留在门禁内。
 3. `mCurrentFocus=com.winlator/com.winlator.renpy.RenPyActivity` 前台；28s 内完成 1.2GB `.rpa` 加载 + 字节码装载 + 主菜单渲染。
 4. `input tap` 交互两步：点「开始」→ 进入剧情；再点 → 推进对话。
 
-客观证据（三张截图，`C:/Users/Doro/Desktop/GalgameShell验证截图/houniao_live_*.png`）：
+客观证据（三张截图，`C:/Users/Doro/Desktop/GameShell验证截图/houniao_live_*.png`）：
 
 | 步骤 | 画面内容 | 像素客观分析 |
 | --- | --- | --- |

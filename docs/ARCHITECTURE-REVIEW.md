@@ -21,7 +21,7 @@
 ## 记录
 
 ### AR-001 v2.9 评估整改批次：崩溃可观测保持"本地归档+查看接入"，不引入崩溃上报 SDK
-- 日期 / 参与人：2026-10-15 / AutoClaw 修复执行（任务 GalgameShell-v29-remediate）
+- 日期 / 参与人：2026-10-15 / AutoClaw 修复执行（任务 GameShell-v29-remediate）
 - 变更摘要：移动端报告 P1-1 要求"接入 crashes/ 并评估开源崩溃 SDK"。
 - 备选方案与取舍：A) 引入 Crashlytics/Sentry 类 SDK（否决：引入新依赖+网络上报，
   与既有零遥测决策冲突，GalgameCrashHandler javadoc 与隐私说明均为明文承诺）；

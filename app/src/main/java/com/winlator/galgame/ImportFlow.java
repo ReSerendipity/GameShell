@@ -83,7 +83,7 @@ public final class ImportFlow {
         EngineDetector.Engine engine = EngineDetector.detect(sourceFolder);
         EngineDetector.Route route = engine.route;
         String[] children = sourceFolder.list();
-        Log.i("GalgameShell: import", "source=" + sourceFolder.getAbsolutePath()
+        Log.i("GameShell: import", "source=" + sourceFolder.getAbsolutePath()
                 + " gameId=" + gameId + " engine=" + engine + " route=" + route
                 + " files=" + (children == null ? 0 : children.length));
         List<String> markers = EngineDetector.encryptionMarkers(sourceFolder);
@@ -293,14 +293,14 @@ public final class ImportFlow {
         File installedWineDir = RootFS.find(context).getInstalledWineDir();
         WineInfo wineInfo = WineInfo.fromIdentifier(context, presetWineVersion);
         if (wineInfo == WineInfo.MAIN_WINE_INFO) {
-            Log.w("GalgameShell: import", "wine_version=" + presetWineVersion
+            Log.w("GameShell: import", "wine_version=" + presetWineVersion
                     + " 不是合法的 Wine identifier（期望形如 wine-9.22），engine=" + engine
                     + "，回落主 Wine");
             return null;
         }
         File wineDir = new File(installedWineDir, wineInfo.identifier());
         if (!wineDir.isDirectory()) {
-            Log.w("GalgameShell: import", "engine=" + engine + " 预设要求 Wine "
+            Log.w("GameShell: import", "engine=" + engine + " 预设要求 Wine "
                     + wineInfo.fullVersion() + "，但设备上未安装（缺 " + wineDir.getPath()
                     + "），回落主 Wine " + WineInfo.MAIN_WINE_VERSION
                     + "；安装入口：设置 → Wine 版本 → 安装 Wine");
@@ -309,12 +309,12 @@ public final class ImportFlow {
         File pattern = new File(installedWineDir,
                 "container-pattern-" + wineInfo.fullVersion() + ".tzst");
         if (!pattern.isFile()) {
-            Log.w("GalgameShell: import", "engine=" + engine + " 的 Wine "
+            Log.w("GameShell: import", "engine=" + engine + " 的 Wine "
                     + wineInfo.fullVersion() + " 已安装但缺 " + pattern.getName()
                     + "，说明上次安装未完成，回落主 Wine；请在设置里移除该 Wine 版本后重装");
             return null;
         }
-        Log.i("GalgameShell: import", "engine=" + engine + " 使用 Wine " + wineInfo.fullVersion()
+        Log.i("GameShell: import", "engine=" + engine + " 使用 Wine " + wineInfo.fullVersion()
                 + "（identifier=" + wineInfo.identifier() + "）");
         return wineInfo.identifier();
     }

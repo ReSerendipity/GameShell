@@ -65,7 +65,7 @@ public class ContainersFragment extends Fragment {
         Context context = recyclerView.getContext();
         emptyTextView = frameLayout.findViewById(R.id.TVEmptyText);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        // GalgameShell：列表项已卡片化（自带上/下间距），不再需要分隔线
+        // GameShell：列表项已卡片化（自带上/下间距），不再需要分隔线
         return frameLayout;
     }
 
@@ -84,13 +84,13 @@ public class ContainersFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if (menuItem.getItemId() == R.id.menu_item_add) {
             if (!RootFS.find(getContext()).isValid()) return false;
-            // GalgameShell R4：经 GalgameHost 路由到正确 Fragment 容器（新壳 galgameFragmentContainer /
+            // GameShell R4：经 GalgameHost 路由到正确 Fragment 容器（新壳 galgameFragmentContainer /
             // 旧壳 FLFragmentContainer），避免硬编码 R.id.FLFragmentContainer 在新壳布局中不存在而崩溃
             ((GalgameHost)getActivity()).showFragment(new ContainerDetailFragment());
             return true;
         }
         else if (menuItem.getItemId() == R.id.menu_item_galgame_library) {
-            // GalgameShell 入口（新增价值层，不改动上游既有逻辑）
+            // GameShell 入口（新增价值层，不改动上游既有逻辑）
             startActivity(new Intent(getContext(), com.winlator.galgame.ui.GalgameLibraryActivity.class));
             return true;
         }
@@ -134,7 +134,7 @@ public class ContainersFragment extends Fragment {
             holder.imageView.setImageResource(R.drawable.icon_container);
             holder.title.setText(item.getName());
 
-            // GalgameShell：副标题显示图形驱动 + 分辨率，让卡片信息更完整（消除简陋感）
+            // GameShell：副标题显示图形驱动 + 分辨率，让卡片信息更完整（消除简陋感）
             String driver = item.getGraphicsDriver();
             if (driver != null && driver.contains(",")) driver = driver.substring(0, driver.indexOf(','));
             String screen = item.getScreenSize();
@@ -161,7 +161,7 @@ public class ContainersFragment extends Fragment {
         }
 
         private void showListItemMenu(View anchorView, Container container) {
-            // GalgameShell R2：宿主契约化（抽屉壳 / 新底部导航壳共用）
+            // GameShell R2：宿主契约化（抽屉壳 / 新底部导航壳共用）
             GalgameHost activity = (GalgameHost)getActivity();
             PopupMenu listItemMenu = new PopupMenu(getActivity(), anchorView);
             listItemMenu.inflate(R.menu.container_popup_menu);
@@ -214,7 +214,7 @@ public class ContainersFragment extends Fragment {
             Activity activity = getActivity();
             Intent intent = new Intent(activity, XServerDisplayActivity.class);
             intent.putExtra("container_id", container.id);
-            // GalgameShell：容器带 galgame_overlay.json 时直接运行游戏（免进 Windows 桌面找 exe）
+            // GameShell：容器带 galgame_overlay.json 时直接运行游戏（免进 Windows 桌面找 exe）
             com.winlator.galgame.GalgameLaunchHelper.injectExecPath(container, intent);
             activity.startActivity(intent);
         }

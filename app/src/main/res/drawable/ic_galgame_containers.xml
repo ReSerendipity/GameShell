@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 底部导航「容器管理」图标：带盖的盒子（容器语义），替代原先的系统
+  GameShell 底部导航「容器管理」图标：带盖的盒子（容器语义），替代原先的系统
   ic_menu_agenda（那是日程清单，与容器无关）。
   由 galgame_nav_item.xml 着色（选中=colorAccent / 未选中=colorTextDisabled），故仅提供单色剪影。
 -->

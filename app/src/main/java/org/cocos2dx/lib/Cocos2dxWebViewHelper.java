@@ -60,28 +60,28 @@ public class Cocos2dxWebViewHelper {
         Cocos2dxWebViewHelper.webViews = new SparseArray<Cocos2dxWebView>();
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static boolean shouldStartLoading(int index, String message) { return false; }
 
     public static boolean _shouldStartLoading(int index, String message) {
         return !shouldStartLoading(index, message);
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void didFinishLoading(int index, String message) {  }
 
     public static void _didFinishLoading(int index, String message) {
         didFinishLoading(index, message);
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void didFailLoading(int index, String message) {  }
 
     public static void _didFailLoading(int index, String message) {
         didFailLoading(index, message);
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void onJsCallback(int index, String message) {  }
 
     public static void _onJsCallback(int index, String message) {

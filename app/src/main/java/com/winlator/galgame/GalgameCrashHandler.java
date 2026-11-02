@@ -23,7 +23,7 @@ import java.util.Locale;
  * <p>决策：不引入崩溃 SDK（报告未提及新依赖，遵守落地铁律 1）；崩溃文件不做自动上报
  * （无后端/无凭据，超范围）；ANR 采集属系统级能力（ANR-WatchDog 类依赖），记为后续建议。
  *
- * <p>v2.9 评估整改（任务 GalgameShell-v29-remediate，对应移动端工程体系报告 P1-1）：
+ * <p>v2.9 评估整改（任务 GameShell-v29-remediate，对应移动端工程体系报告 P1-1）：
  * 崩溃文件按 versionCode 分目录归档（crashes/&lt;versionCode&gt;/，见 {@link #crashDir}），
  * 并经 {@link GalgameLogs#crashReports} 接入诊断日志查看；自动上报仍不做（零遥测决策不变）。
  */

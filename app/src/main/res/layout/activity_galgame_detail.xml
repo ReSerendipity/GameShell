@@ -224,7 +224,7 @@
                             android:text="切换  ›" />
                     </LinearLayout>
 
-                    <!-- GalgameShell 第七轮：引用型原生游戏收纳进应用内部 -->
+                    <!-- GameShell 第七轮：引用型原生游戏收纳进应用内部 -->
                     <LinearLayout
                         android:id="@+id/BTMigrateStore"
                         style="@style/SwissRow"

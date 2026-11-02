@@ -1,7 +1,7 @@
 package org.tvp.kirikiri2;
 
 /**
- * Kirikiroid2（Kirikiri2 / KirikiriZ）引擎 Activity —— 已集成进 GalgameShell 本 APK。
+ * Kirikiroid2（Kirikiri2 / KirikiriZ）引擎 Activity —— 已集成进 GameShell 本 APK。
  *
  * <p>本文件改写自上游 <a href="https://github.com/zeas2/Kirikiroid2">zeas2/Kirikiroid2</a>
  * 的 {@code project/android/src/org/tvp/kirikiri2/KR2Activity.java}，
@@ -124,7 +124,7 @@ public class KR2Activity extends Cocos2dxActivity {
         return mDbgMemoryInfo.getTotalPss(); // in kB
     }
 
-    // GalgameShell：Android 框架的 Context.getDeviceId(Context) 是静态方法（API 14+），
+    // GameShell：Android 框架的 Context.getDeviceId(Context) 是静态方法（API 14+），
     // 子类里再声明同名无参方法会报「无法覆盖 ContextWrapper 中的 getDeviceId（覆盖的方法为 static）」。
     // 上游 Kirikiroid2 侧 native 并未 dlsym 该符号（已对 libgame.so 取证：26 个
     // Java_org_tvp_kirikiri2_KR2Activity_* 里不含 getDeviceId），因此改名是安全的。
@@ -162,7 +162,7 @@ public class KR2Activity extends Cocos2dxActivity {
     }
 
     /**
-     * GalgameShell: 引擎浏览器把 recent 项与 fileList 分栏，皮肤白底白字，▶ 不可见。
+     * GameShell: 引擎浏览器把 recent 项与 fileList 分栏，皮肤白底白字，▶ 不可见。
      * 这里加一个可见入口，按 RecentListItem 的 btn_play 布局运行时换算坐标，再用引擎
      * 自己的 nativeTouchesBegin/End 注入。三点（▶ 中心/左/右）用于标定，点按使用已
      * 固化的点（默认中心），长按切换标定点，选择写入 SharedPreferences。
@@ -595,7 +595,7 @@ public class KR2Activity extends Cocos2dxActivity {
         }
     }
 
-    // GalgameShell：Cocos2dxActivity.mGLContextAttrs 是 private 字段，子类无法直接访问，
+    // GameShell：Cocos2dxActivity.mGLContextAttrs 是 private 字段，子类无法直接访问，
     // 改为反射读取；读不到就按 null 处理（等价于不设 TRANSLUCENT 格式）。
     private int[] readGLContextAttrs() {
         try {
@@ -642,7 +642,7 @@ public class KR2Activity extends Cocos2dxActivity {
     }
 
     /**
-     * GalgameShell: 补齐 libgame.so JNI 契约缺失的 isWritableNormal(String)Z。
+     * GameShell: 补齐 libgame.so JNI 契约缺失的 isWritableNormal(String)Z。
      * 原生层按硬编码方法名 "isWritableNormal" 反射调用本方法以探测某存储路径是否可写；
      * 此前该法缺失 → GetStaticMethodID 失败 → 可写性探测恒失败 → 在游戏目录（含应用专属
      * 外部目录、已开启 All-Files-Access 的 /sdcard）下一律弹“只读的外部存储器”并退回浏览器。

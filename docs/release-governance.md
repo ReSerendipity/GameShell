@@ -1,4 +1,4 @@
-# 发布 / 回滚 规范（GalgameShell）
+# 发布 / 回滚 规范（GameShell）
 
 > **来源与权威**：公共条款见 `ReSerendipity/.github` 的 `REPOSITORY_GUIDELINES.md` §10（发布 / 分发统一规范）。
 > 本文件由 `ReSerendipity/.github` 的 `RELEASE_GOVERNANCE_TEMPLATE.md` 本地化而来，只填本仓特有内容，不重写、不抵触 §10 公共条款。

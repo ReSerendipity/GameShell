@@ -3,7 +3,7 @@
 #
 # 为什么存在：被测对象都是纯 java 逻辑（无 Android 依赖），
 # 因此可以直接用 JDK 编译运行。2026-10-05 修复「Ren'Py 标准布局漏判」时建立
-# EngineDetector 回归；v2.9 评估整改（任务 GalgameShell-v29-remediate，
+# EngineDetector 回归；v2.9 评估整改（任务 GameShell-v29-remediate，
 # 对应《测试_Flash报告》P1-1）扩展 GalgameLanguageDetector 回归。
 #
 # 用法： bash tools/run_detect_test.sh     （退出码非 0 表示有用例失败）

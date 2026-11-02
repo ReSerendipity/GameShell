@@ -1,15 +1,15 @@
 <div align="center">
 
-# GalgameShell
+# GameShell
 
 **Galgame 的 Android 运行器 —— 导入即玩，自动识别引擎并路由到原生或模拟层。**
 A standalone Android galgame player: import a folder, auto-detect the engine, and play.
 
-[![CI](https://github.com/ReSerendipity/GalgameShell/actions/workflows/ci.yml/badge.svg)](https://github.com/ReSerendipity/GalgameShell/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/ReSerendipity/GalgameShell?color=orange)](https://github.com/ReSerendipity/GalgameShell/releases)
+[![CI](https://github.com/ReSerendipity/GameShell/actions/workflows/ci.yml/badge.svg)](https://github.com/ReSerendipity/GameShell/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ReSerendipity/GameShell?color=orange)](https://github.com/ReSerendipity/GameShell/releases)
 [![License: LGPL-2.1](https://img.shields.io/badge/License-LGPL--2.1-blue.svg)](LICENSE)
 ![Language](https://img.shields.io/badge/Java-Kotlin%2FC%2FC%2B%2B-orange)
-![GitHub last commit](https://img.shields.io/github/last-commit/ReSerendipity/GalgameShell)
+![GitHub last commit](https://img.shields.io/github/last-commit/ReSerendipity/GameShell)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
 [![Governance](https://img.shields.io/badge/governance-ReSerendipity%2F.github-purple.svg)](https://github.com/ReSerendipity/.github/tree/main/governance)
 
@@ -23,7 +23,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 ### 项目简介
 
-**GalgameShell** 是独立的 galgame 安卓运行器，内嵌 [`brunodev85/winlator-app`](https://github.com/brunodev85/winlator-app)（LGPL-2.1）作为 Windows 模拟层**源码组件**——集成与修改标注方式同内嵌的 Kirikiroid2 / Ren'Py，见 [`NOTICE`](NOTICE)。它在 APK 内同时内嵌 Ren'Py 与 Kirikiri2 原生运行时，导入游戏文件夹后自动识别引擎（v11.3 已覆盖 19 种指纹），在「内嵌原生引擎 / 外部原生播放器（可选）/ Winlator 模拟」之间智能路由，无需手工配置 Wine 容器。
+**GameShell** 是独立的 galgame 安卓运行器，内嵌 [`brunodev85/winlator-app`](https://github.com/brunodev85/winlator-app)（LGPL-2.1）作为 Windows 模拟层**源码组件**——集成与修改标注方式同内嵌的 Kirikiroid2 / Ren'Py，见 [`NOTICE`](NOTICE)。它在 APK 内同时内嵌 Ren'Py 与 Kirikiri2 原生运行时，导入游戏文件夹后自动识别引擎（v11.3 已覆盖 19 种指纹），在「内嵌原生引擎 / 外部原生播放器（可选）/ Winlator 模拟」之间智能路由，无需手工配置 Wine 容器。
 
 > 治理规范：[ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
@@ -42,15 +42,15 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 ### 展示
 
-![引擎检测与 A/B 路由](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-routing.svg)
+![引擎检测与 A/B 路由](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-routing.svg)
 
 > **引擎路由**：导入后由 EngineDetector 判定引擎类型，优先走内嵌原生引擎（B 路由），不可用时可唤起外部原生播放器作为可选回退，其余游戏走 Winlator Box64+Wine 模拟层（A 路由）。
 
-![导入即玩流程](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-import-flow.svg)
+![导入即玩流程](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-import-flow.svg)
 
 > **导入流程**：选择文件夹 → 引擎识别 → 创建容器并注入区域/字体 → 封面墙入库 → 点按启动。全程向导对话框分步显示进度。
 
-![仓库架构](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/architecture.svg)
+![仓库架构](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
 
 > **仓库架构**：依据仓库真实目录结构绘制（main @ f466b3a），展示 `app/`、`ci/`、`docs/`、`tools/` 与内嵌 Winlator 组件的关系。
 
@@ -60,7 +60,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 | | |
 |---|---|
-| ![游戏库空态](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-shot-1-library.png) | ![设置](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-shot-2-settings.png) |
+| ![游戏库空态](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-1-library.png) | ![设置](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-2-settings.png) |
 | **游戏库**：空态封面墙，含搜索与「导入游戏」入口 | **设置**：运行环境、输入控制、诊断等入口集中处 |
 
 > **注**：容器管理与工具页在 Swiss 单首页改版后不再有底部导航直达，需从游戏详情进入；完整真机（ARM64 + Vulkan）验收记录见 [`docs/real-device-verification.md`](docs/real-device-verification.md)。
@@ -78,8 +78,8 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 本仓库**按设计不附带大二进制运行时**：Wine / Box64 运行时（`*.tzst`）与各架构原生库（`*.so`）不随源码分发。因此 clone 之后**不能直接 `./gradlew assembleDebug` 出完整可用的 APK**，需先从 Winlator 组件官方仓库补齐这部分资源（`upstream` 远端即组件官方仓库，兼作按需移植官方修复的来源）：
 
 ```bash
-git clone https://github.com/ReSerendipity/GalgameShell.git
-cd GalgameShell
+git clone https://github.com/ReSerendipity/GameShell.git
+cd GameShell
 
 # 从上游取回被排除的运行时资源与 native 库（只落工作区，不写索引）
 git remote add upstream https://github.com/brunodev85/winlator-app
@@ -173,7 +173,7 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ### 许可证
 
-整体以 LGPL-2.1 发布：Winlator 组件部分继承 LGPL-2.1（不可更授），GalgameShell 增量层亦以 LGPL-2.1 发布（自主选择，保持整仓单许可证，见决策 A8）。第三方组件与字体政策详见 [`NOTICE`](NOTICE)。
+整体以 LGPL-2.1 发布：Winlator 组件部分继承 LGPL-2.1（不可更授），GameShell 增量层亦以 LGPL-2.1 发布（自主选择，保持整仓单许可证，见决策 A8）。第三方组件与字体政策详见 [`NOTICE`](NOTICE)。
 
 ---
 
@@ -181,13 +181,13 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ### Introduction
 
-**GalgameShell** is a standalone Android galgame player that embeds [Winlator](https://github.com/brunodev85/winlator-app) (LGPL-2.1) as its Windows-emulation source component — with modifications marked, same pattern as the bundled Kirikiroid2 / Ren'Py engines (see [`NOTICE`](NOTICE)). It also embeds Ren'Py and Kirikiri2 native runtimes inside the APK. After you pick a game folder, GalgameShell auto-detects the engine (19 fingerprints in v11.3) and routes the game to the embedded native engine, an optional external native player, or the Winlator emulation layer — no manual Wine container configuration needed.
+**GameShell** is a standalone Android galgame player that embeds [Winlator](https://github.com/brunodev85/winlator-app) (LGPL-2.1) as its Windows-emulation source component — with modifications marked, same pattern as the bundled Kirikiroid2 / Ren'Py engines (see [`NOTICE`](NOTICE)). It also embeds Ren'Py and Kirikiri2 native runtimes inside the APK. After you pick a game folder, GameShell auto-detects the engine (19 fingerprints in v11.3) and routes the game to the embedded native engine, an optional external native player, or the Winlator emulation layer — no manual Wine container configuration needed.
 
 > Governance: [ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
 ### Features
 
-- **Import and play**: Pick a game folder; GalgameShell creates an isolated container, copies files, and injects the runtime. Tap the cover art to launch.
+- **Import and play**: Pick a game folder; GameShell creates an isolated container, copies files, and injects the runtime. Tap the cover art to launch.
 - **Embedded native engines**: Ren'Py 8.5.3 (`librenpython.so`, Python 3.12.8) and Kirikiri2 / Kirikiroid2 (`libgame.so`) are bundled; matching games run in-process without Wine.
 - **Engine detection and A/B routing**: 19 engine fingerprints (Siglus / YU-RIS / Artemis / CatSystem2 / AdvHD / SystemNNN / BGI / CMVS / Unity …); `detectDeep()` supports bounded deep scanning.
 - **One-tap Japanese locale**: Auto-injects `ja_JP.UTF-8` and configures Japanese fonts to fix mojibake (fonts are not bundled).
@@ -198,15 +198,15 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ### Showcase
 
-![Engine detection and A/B routing](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-routing.svg)
+![Engine detection and A/B routing](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-routing.svg)
 
 > **Engine routing**: After import, EngineDetector picks the route — embedded native engine (Route B, default), optional external native player fallback, or Winlator Box64+Wine emulation (Route A).
 
-![Import-to-launch flow](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-import-flow.svg)
+![Import-to-launch flow](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-import-flow.svg)
 
 > **Import flow**: Pick folder → detect engine → create container and inject locale/fonts → appear in cover wall → tap to launch. Progress is shown step by step in a wizard dialog.
 
-![Repository architecture](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/architecture.svg)
+![Repository architecture](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
 
 > **Repository architecture**: Drawn from the actual directory tree (main @ f466b3a), showing `app/`, `ci/`, `docs/`, `tools/`, and the embedded Winlator component.
 
@@ -216,7 +216,7 @@ The screenshots below were captured on an x86_64 emulator (API 30, SwiftShader s
 
 | | |
 |---|---|
-| ![Library empty state](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-shot-1-library.png) | ![Settings](https://gcore.jsdelivr.net/gh/ReSerendipity/GalgameShell@main/docs/assets/readme-galgameshell-shot-2-settings.png) |
+| ![Library empty state](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-1-library.png) | ![Settings](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-2-settings.png) |
 | **Library**: empty cover wall with search and "Import Game" entry | **Settings**: runtime, input controls, diagnostics, and other entries |
 
 > **Note**: Container management and tools pages no longer have bottom-nav entries after the Swiss single-page redesign; they are reached from the game detail screen. Full ARM64 + Vulkan real-device verification records are in [`docs/real-device-verification.md`](docs/real-device-verification.md).
@@ -234,8 +234,8 @@ The screenshots below were captured on an x86_64 emulator (API 30, SwiftShader s
 This repo **by design does not bundle large binary runtimes**: Wine / Box64 rootfs (`*.tzst`) and native libs (`*.so`) are distributed separately.
 
 ```bash
-git clone https://github.com/ReSerendipity/GalgameShell.git
-cd GalgameShell
+git clone https://github.com/ReSerendipity/GameShell.git
+cd GameShell
 
 # Restore excluded runtime assets and native libs (worktree only, not staged)
 git remote add upstream https://github.com/brunodev85/winlator-app
@@ -324,4 +324,4 @@ A: This project distributes source only. Releases attach a CycloneDX SBOM and SH
 
 ### License
 
-The whole project is released under LGPL-2.1: the Winlator component inherits LGPL-2.1 (cannot be re-licensed), and the GalgameShell delta layer is also released under LGPL-2.1 (deliberate choice to keep a single license across the repo, see decision A8). Third-party components and font policy are listed in [`NOTICE`](NOTICE).
+The whole project is released under LGPL-2.1: the Winlator component inherits LGPL-2.1 (cannot be re-licensed), and the GameShell delta layer is also released under LGPL-2.1 (deliberate choice to keep a single license across the repo, see decision A8). Third-party components and font policy are listed in [`NOTICE`](NOTICE).

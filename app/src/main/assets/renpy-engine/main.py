@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# GalgameShell — 内置 Ren'Py 启动器（等价于 RAPT 的 private/main.py）
+# GameShell — 内置 Ren'Py 启动器（等价于 RAPT 的 private/main.py）
 #
 # 运行契约（已对 librenpython.so 的 start_python()、SDK 官方启动器 renpy.py 与
 # renpy 源码逐条核实，详见 README.md「内嵌原生引擎」；完整运行契约属对内文档，仅本机保留、不随仓库分发）：
@@ -57,7 +57,7 @@ def path_to_gamedir(basedir, name):
     """
     返回游戏脚本/资源目录（config.gamedir）。
 
-    GalgameShell：`basedir` 即 RenPyActivity 传入的外部游戏根目录，
+    GameShell：`basedir` 即 RenPyActivity 传入的外部游戏根目录，
     其下 game/ 子目录为 gamedir（与官方 candidates 逻辑的落点一致）。
     """
     candidates = [name]
@@ -197,11 +197,11 @@ def main():
     if game_root:
         # renpy.arguments 以位置参数解析 basedir / command。
         sys.argv = [sys.argv[0], game_root, "run"]
-        print("GalgameShell: booting Ren'Py game at", game_root)
+        print("GameShell: booting Ren'Py game at", game_root)
     else:
         # 无游戏目录：basedir 留空，bootstrap 会回落到 renpy_base(=getFilesDir())。
         sys.argv = [sys.argv[0]]
-        print("GalgameShell: no game_dir.txt, falling back to renpy_base")
+        print("GameShell: no game_dir.txt, falling back to renpy_base")
 
     # 官方 renpy.py main() 同款：忽略弃用警告。
     warnings.simplefilter("ignore", DeprecationWarning)

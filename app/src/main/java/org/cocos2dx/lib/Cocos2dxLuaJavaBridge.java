@@ -27,12 +27,12 @@ package org.cocos2dx.lib;
 
 public class Cocos2dxLuaJavaBridge
 {
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      public static int callLuaFunctionWithString(int luaFunctionId, String value) { return 0; }
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      public static int callLuaGlobalFunctionWithString(String luaFunctionName, String value) { return 0; }
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      public static int retainLuaFunction(int luaFunctionId) { return 0; }
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      public static int releaseLuaFunction(int luaFunctionId) { return 0; }
 }

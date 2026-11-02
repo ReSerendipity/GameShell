@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <!-- GalgameShell: Kirikiri 内置引擎需整库读写 /sdcard 游戏目录（Android 11+ 须 All-Files-Access，设置页手授） -->
+    <!-- GameShell: Kirikiri 内置引擎需整库读写 /sdcard 游戏目录（Android 11+ 须 All-Files-Access，设置页手授） -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
@@ -18,7 +18,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- GalgameShell: 让 Android 11+ 能看到原生播放器（B 路由唤起，P5）。
+    <!-- GameShell: 让 Android 11+ 能看到原生播放器（B 路由唤起，P5）。
          第二轮移动端评估 T1：补齐 NativeRouteLauncher 6 个 B 路由 target 的包可见性
          （org.easyrpg.player / org.ppsspp.ppsspp），消除 EasyRPG/PPSSPP 启动不可达。 -->
     <queries>
@@ -38,14 +38,14 @@
         android:allowAudioPlaybackCapture="true"
         android:label="@string/app_name">
 
-        <!-- GalgameShell R2：旧抽屉壳保留但不再作为 launcher（GalgameMainActivity 接管启动入口） -->
+        <!-- GameShell R2：旧抽屉壳保留但不再作为 launcher（GalgameMainActivity 接管启动入口） -->
         <activity android:name="com.winlator.MainActivity"
             android:theme="@style/GalgameMainTheme"
             android:exported="false"
             android:screenOrientation="sensor"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
 
-        <!-- GalgameShell R2：新底部导航壳，启动即游戏库（游戏库/容器/工具/设置 4 Tab） -->
+        <!-- GameShell R2：新底部导航壳，启动即游戏库（游戏库/容器/工具/设置 4 Tab） -->
         <activity android:name="com.winlator.GalgameMainActivity"
             android:theme="@style/GalgameMainTheme"
             android:exported="true"
@@ -88,7 +88,7 @@
             android:screenOrientation="sensor"
             android:configChanges="keyboard|keyboardHidden|smallestScreenSize|density|navigation" />
 
-        <!-- GalgameShell 第六轮：桌面快捷方式直启转发（透明，见类注释） -->
+        <!-- GameShell 第六轮：桌面快捷方式直启转发（透明，见类注释） -->
         <activity android:name="com.winlator.GalgameShortcutActivity"
             android:exported="true"
             android:excludeFromRecents="true"
@@ -125,14 +125,14 @@
             android:exported="false"
             android:screenOrientation="sensor" />
 
-        <!-- GalgameShell 游戏库（全新 Activity，P1/P2/P4/P5 前端入口）；亮色主题 + v29 关闭 Force Dark（系统深色模式强转暗色的根因） -->
+        <!-- GameShell 游戏库（全新 Activity，P1/P2/P4/P5 前端入口）；亮色主题 + v29 关闭 Force Dark（系统深色模式强转暗色的根因） -->
         <activity android:name="com.winlator.galgame.ui.GalgameLibraryActivity"
             android:theme="@style/GalgameLibraryTheme"
             android:exported="false"
             android:screenOrientation="sensor"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|density|navigation" />
 
-        <!-- GalgameShell：Kirikiroid2 内置引擎宿主（引擎运行时随本 APK 打包，不唤起任何第三方 App） -->
+        <!-- GameShell：Kirikiroid2 内置引擎宿主（引擎运行时随本 APK 打包，不唤起任何第三方 App） -->
         <!-- 引擎自身 Activity：libgame.so 的 JNI 按硬编码类名 org/tvp/kirikiri2/KR2Activity 绑定，包不得改名 -->
         <activity android:name="org.tvp.kirikiri2.KR2Activity"
             android:theme="@style/GalgameKrkrTheme"
@@ -150,7 +150,7 @@
             android:name="android.app.lib_name"
             android:value="game" />
 
-        <!-- GalgameShell：内置 Ren'Py 引擎宿主（继承 org.renpy.android.PythonSDLActivity）。
+        <!-- GameShell：内置 Ren'Py 引擎宿主（继承 org.renpy.android.PythonSDLActivity）。
              引擎从 assets/renpy-engine 解包到 getFilesDir()，游戏根目录经 EXTRA_GAME_DIR 传入。
              放在 com.winlator.renpy（非 galgame 包）以避开 CI 桩编译门禁。 -->
         <activity android:name="com.winlator.renpy.RenPyActivity"
@@ -179,7 +179,7 @@
                 android:resource="@xml/file_paths"/>
         </provider>
 
-        <!-- GalgameShell：Ren'Py 引擎的 FileProvider（PythonSDLActivity.openEditor 用）。
+        <!-- GameShell：Ren'Py 引擎的 FileProvider（PythonSDLActivity.openEditor 用）。
              权威名 = getPackageName()+".fileprovider" = com.winlator.fileprovider（与上面的大写
              com.winlator.FileProvider 不同字符串，可共存）。 -->
         <provider

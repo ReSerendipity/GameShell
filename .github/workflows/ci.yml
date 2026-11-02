@@ -1,4 +1,4 @@
-name: GalgameShell CI
+name: GameShell CI
 
 # P0/P7 CI（Plan §VIII.3/§VIII.4）：
 #   1) rebase-guard —— 零改铁律 + 资产合法性（无需 Android SDK）

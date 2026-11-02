@@ -24,6 +24,6 @@
 package org.cocos2dx.lib;
 
 public class Cocos2dxJavascriptJavaBridge {
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      public static int evalString(String value) { return 0; }
 }

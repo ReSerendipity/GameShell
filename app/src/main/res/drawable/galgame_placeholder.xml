@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GalgameShell: 游戏库占位插画（Swiss：中性灰轮廓），替换系统 ic_menu_gallery -->
+<!-- GameShell: 游戏库占位插画（Swiss：中性灰轮廓），替换系统 ic_menu_gallery -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="72dp"
     android:height="72dp"

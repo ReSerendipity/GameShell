@@ -276,7 +276,7 @@ public abstract class GeneralComponents {
         FileUtils.delete(tempDir);
     }
 
-    // GalgameShell R2：宿主契约化——参数由 MainActivity 降级为 GalgameHost
+    // GameShell R2：宿主契约化——参数由 MainActivity 降级为 GalgameHost
     private static void openFileForInstall(final GalgameHost activity, final Type type, final Spinner spinner, final String defaultItem) {
         // 宿主必为 FragmentActivity 实现；Context / startActivityForResult 走 fa
         final FragmentActivity fa = (FragmentActivity)activity;

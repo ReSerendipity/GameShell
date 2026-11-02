@@ -1,5 +1,5 @@
 /**
- * com.winlator.galgame — GalgameShell 外壳专属包（Plan Part I §I.5 / P0）。
+ * com.winlator.galgame — GameShell 外壳专属包（Plan Part I §I.5 / P0）。
  *
  * 设计铁律（Plan §VIII.4 rebase 硬化）：本包内所有代码为「新增价值层」，
  * 对官方 winlator-app 前端零侵入 —— 绝不修改

@@ -1,4 +1,4 @@
-Ren'Py 运行时第三方组件与许可证（内嵌于 GalgameShell）
+Ren'Py 运行时第三方组件与许可证（内嵌于 GameShell）
 ====================================================
 
 本 APK 内嵌 Ren'Py 安卓运行时（librenpython.so + assets/renpy-engine），
@@ -37,6 +37,6 @@ LGPL-2.1 组件（静态链入 librenpython.so）
 LGPL-2.1 全文随本 APK 分发于 assets/licenses/LICENSE_LGPL-2.1.txt，
 亦可在仓库根目录 LICENSE 查看。
 
-GalgameShell 对 Ren'Py 运行时的修改仅限 Java 壳剥离 Google Play Asset
+GameShell 对 Ren'Py 运行时的修改仅限 Java 壳剥离 Google Play Asset
 Delivery / IAP（不影响 LGPL 组件本身），完整对应源码公开于：
-https://github.com/ReSerendipity/GalgameShell
+https://github.com/ReSerendipity/GameShell

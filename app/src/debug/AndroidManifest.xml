@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GalgameShell: debug-only overrides. Export XServerDisplayActivity so adb am start
+<!-- GameShell: debug-only overrides. Export XServerDisplayActivity so adb am start
      can launch it directly for launch-pipeline diagnosis. Never in release builds. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">

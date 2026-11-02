@@ -165,7 +165,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (enableLogs) ProcessHelper.addDebugCallback(debugDialog = new DebugDialog(this));
         Menu menu = navigationView.getMenu();
         menu.findItem(R.id.menu_item_logs).setVisible(enableLogs);
-        // GalgameShell 第六轮：游戏内菜单高级项按设置页开关显隐（默认隐藏；
+        // GameShell 第六轮：游戏内菜单高级项按设置页开关显隐（默认隐藏；
         // 永显项：触控模式/性能显示/键盘/退出）
         setMenuVisible(menu, R.id.menu_item_input_controls, "galgame_menu_input_controls");
         setMenuVisible(menu, R.id.menu_item_toggle_fullscreen, "galgame_menu_fullscreen");
@@ -349,7 +349,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
         ForegroundService.setPipMode(isInPictureInPictureMode);
-        // GalgameShell：画中画小窗里浮钮比例失衡且无意义，随 PiP 隐藏/恢复
+        // GameShell：画中画小窗里浮钮比例失衡且无意义，随 PiP 隐藏/恢复
         if (galgameMenuHandle != null) {
             galgameMenuHandle.setVisibility(isInPictureInPictureMode ? View.GONE : View.VISIBLE);
         }
@@ -370,7 +370,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     @Override
     public void onBackPressed() {
         if (environment != null) {
-            // GalgameShell：返回键优先关抽屉；游戏内则派发 ESC（galgame 通用
+            // GameShell：返回键优先关抽屉；游戏内则派发 ESC（galgame 通用
             // 「取消/呼出游戏菜单」）。上游原行为是返回键开抽屉（用户反馈
             // 「返回键弹出 Winlator 页面」）；功能菜单入口改为右上角浮钮
             // + 触摸板模式四指点按。
@@ -397,7 +397,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 drawerLayout.closeDrawers();
                 break;
             case R.id.menu_item_galgame_touch: {
-                // GalgameShell：直接触控 ⇄ 触摸板 运行时切换（持久化到容器 extra）
+                // GameShell：直接触控 ⇄ 触摸板 运行时切换（持久化到容器 extra）
                 String mode = com.winlator.galgame.GalgameInputHelper.toggle();
                 int resId = (mode == null) ? R.string.galgame_touch_na
                         : com.winlator.galgame.GalgameInputHelper.MODE_DIRECT.equals(mode)
@@ -408,7 +408,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 break;
             }
             case R.id.menu_item_galgame_hud: {
-                // GalgameShell：性能浮窗多项选择（FPS/CPU/频率/内存/进程/GPU/负载/功耗）。
+                // GameShell：性能浮窗多项选择（FPS/CPU/频率/内存/进程/GPU/负载/功耗）。
                 // 上游三档 FrameRating 只能在容器编辑页开，galgame 容器进不去；此入口逐项可选。
                 showHudPicker();
                 break;
@@ -471,7 +471,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         return preferences;
     }
 
-    /** GalgameShell：性能浮窗多项选择（FPS/CPU 使用率/CPU 频率/系统内存/进程内存/GPU/负载/功耗），
+    /** GameShell：性能浮窗多项选择（FPS/CPU 使用率/CPU 频率/系统内存/进程内存/GPU/负载/功耗），
      *  立即生效并写回容器 extra；全不选 = 关闭（此时若容器 hudMode≠DISABLED 回落上游三档浮窗）。 */
     private void showHudPicker() {
         if (container == null) return;
@@ -524,7 +524,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         Intent intent = getIntent();
         if (intent.hasExtra("exec_path")) {
-            // GalgameShell：galgame 容器退出（游戏进程结束/菜单退出）后重启落回游戏库，
+            // GameShell：galgame 容器退出（游戏进程结束/菜单退出）后重启落回游戏库，
             // 而非上游默认的 MainActivity/容器文件管理器（用户反馈「退出游戏回不到库页面」）。
             if (com.winlator.galgame.GalgameLaunchHelper.isGalgameContainer(container)) {
                 com.winlator.galgame.GalgameLaunchHelper.restartToLibrary(this);
@@ -609,7 +609,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             if (container.getHUDMode() == FrameRating.Mode.FULL.ordinal()) envVars.put("X11_WND_GPU_INFO", "1");
 
             String desktopName = shortcut != null || getIntent().hasExtra("exec_path") ? "nogui" : "shell";
-            // GalgameShell: run the game exe directly in nogui mode. The previous chain
+            // GameShell: run the game exe directly in nogui mode. The previous chain
             // (explorer -> winhandler.exe -> CreateProcess) hung on guest-initiated WOW64
             // creation of 32-bit games under box32; the direct `wine <exe>` path is proven
             // to work. Keep the game's own folder as cwd so data/DLL lookups succeed.
@@ -709,7 +709,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         renderer.setCursorVisible(false);
         renderer.setCursorColor(preferences.getInt("cursor_color", 0xffffff));
         renderer.setCursorScale(preferences.getFloat("cursor_scale", 1.0f));
-        // GalgameShell：galgame 容器直启默认启用 forceWindowsFullscreen（游戏窗口等比
+        // GameShell：galgame 容器直启默认启用 forceWindowsFullscreen（游戏窗口等比
         // 铺满虚拟屏；Wine 下 galgame 多为小于虚拟屏的窗口，不铺满时画面只占物理屏一角）。
         // shortcut 路线沿用上游开关；用户可在详情页「高级设置 → 窗口画面铺满」按游戏关闭。
         renderer.setForceWindowsFullscreen(
@@ -738,7 +738,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         rootView.addView(inputControlsView);
 
         if (container != null) {
-            // GalgameShell：上游三档 FrameRating 仅服务上游路线（shortcut/容器直启）。
+            // GameShell：上游三档 FrameRating 仅服务上游路线（shortcut/容器直启）。
             // galgame 直启（exec_path）完全由 GalgamePerfHud 接管——此前一度无条件创建，
             // 结果上游 FULL 档与 PerfHud 双浮窗，且 FrameRating.update() 每帧把自身
             // 拉回 VISIBLE 造成「关闭设置仍在显示」（用户反馈，2026-10-25 第六轮）。
@@ -750,7 +750,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 rootView.addView(frameRating);
             }
 
-            // GalgameShell：多项可选性能浮窗（FPS/CPU/频率/内存/进程/GPU/负载/功耗）。
+            // GameShell：多项可选性能浮窗（FPS/CPU/频率/内存/进程/GPU/负载/功耗）。
             galgamePerfHud = com.winlator.galgame.widget.GalgamePerfHud.attach(rootView, container);
         }
 
@@ -765,14 +765,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         if (MainActivity.DEBUG_MODE) rootView.addView(AppUtils.createDebugMsgTextView(this));
         AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
 
-        // GalgameShell：galgame 容器接入直接触控层（零改上游；overlay/外接鼠标时自动放行上游链）
+        // GameShell：galgame 容器接入直接触控层（零改上游；overlay/外接鼠标时自动放行上游链）
         com.winlator.galgame.GalgameInputHelper.attach(rootView, xServer, container);
         // 抽屉「触控模式」菜单项勾选态与容器实际模式同步
         NavigationView navView = findViewById(R.id.NavigationView);
         android.view.MenuItem touchItem = navView.getMenu().findItem(R.id.menu_item_galgame_touch);
         if (touchItem != null) touchItem.setChecked(com.winlator.galgame.GalgameInputHelper.isDirect());
 
-        // GalgameShell：抽屉入口浮钮（返回键已改派 ESC）。放右上角避让左上角的
+        // GameShell：抽屉入口浮钮（返回键已改派 ESC）。放右上角避让左上角的
         // FrameRating HUD；最后添加使其位于直接触控层之上。
         float density = getResources().getDisplayMetrics().density;
         galgameMenuHandle = new android.widget.ImageView(this);
@@ -1217,7 +1217,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         this.screenEffectProfile = screenEffectProfile;
     }
 
-    /** GalgameShell：游戏内菜单项显隐（设置页开关，默认隐藏高级项）。 */
+    /** GameShell：游戏内菜单项显隐（设置页开关，默认隐藏高级项）。 */
     private void setMenuVisible(Menu menu, int itemId, String key) {
         MenuItem item = menu.findItem(itemId);
         if (item != null) item.setVisible(preferences.getBoolean(key, false));
@@ -1252,7 +1252,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     }
 
     public void changeFrameRatingVisibility(Window window, boolean visible) {
-        // GalgameShell：帧率窗口解析与 frameRating/HUD 实例解耦——galgame 直启路线
+        // GameShell：帧率窗口解析与 frameRating/HUD 实例解耦——galgame 直启路线
         // 不创建上游 FrameRating（GalgamePerfHud 接管），但 frameRatingWindowId 必须在
         // 窗口映射时就解析：HUD 可能中途才开启，届时不再有 map 事件，否则 FPS 恒 0
         // （第八轮用户反馈「监控显示 0」的根因之一）。
@@ -1272,7 +1272,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             }
 
             if (frameRatingWindow != null) {
-                // GalgameShell：GPU 型号同时喂给多项浮窗（上游仅在 FULL 档读取）。
+                // GameShell：GPU 型号同时喂给多项浮窗（上游仅在 FULL 档读取）。
                 // galgame 路线无论 HUD 是否已开启都缓存（lastGpuInfo），中途开启时回填。
                 if ((frameRating != null && frameRating.getMode() == FrameRating.Mode.FULL)
                         || galgamePerfHud != null || galgameRoute) {

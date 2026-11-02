@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- GalgameShell: 列表入场 stagger 动画（纯 XML，零上游 Java 债） -->
+    <!-- GameShell: 列表入场 stagger 动画（纯 XML，零上游 Java 债） -->
     <androidx.recyclerview.widget.RecyclerView
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/RecyclerView"

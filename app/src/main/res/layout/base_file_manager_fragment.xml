@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- GalgameShell: 列表/网格入场 stagger 动画，复用 P6 的 galgame_layout_enter -->
+    <!-- GameShell: 列表/网格入场 stagger 动画，复用 P6 的 galgame_layout_enter -->
     <androidx.recyclerview.widget.RecyclerView
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/RecyclerView"
@@ -28,7 +28,7 @@
         android:textColor="?attr/colorSecondaryText"
         android:visibility="gone" />
 
-    <!-- GalgameShell: 粘贴 FAB 品牌紫，与库页/详情页/设置页 FAB 统一 -->
+    <!-- GameShell: 粘贴 FAB 品牌紫，与库页/详情页/设置页 FAB 统一 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/BTPaste"
         android:layout_width="wrap_content"

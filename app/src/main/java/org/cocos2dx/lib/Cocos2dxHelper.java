@@ -56,7 +56,7 @@ import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
 
-// GalgameShell：原 cocos2d-x 的 APK Expansion（com.android.vending.expansion）与
+// GameShell：原 cocos2d-x 的 APK Expansion（com.android.vending.expansion）与
 // Enhance GameService（com.enhance.gameservice）依赖已移除，getObbFile() 恒返回 null。
 
 
@@ -170,7 +170,7 @@ public class Cocos2dxHelper {
 
             sInited = true;
             
-            // GalgameShell：不再 bind com.enhance.gameservice（该服务本项目不存在）
+            // GameShell：不再 bind com.enhance.gameservice（该服务本项目不存在）
         }
     }
     
@@ -203,7 +203,7 @@ public class Cocos2dxHelper {
         return Cocos2dxHelper.sAssetsPath;
     }
     
-    // GalgameShell：APK Expansion（com.android.vending.expansion.zipfile）已从依赖移除，
+    // GameShell：APK Expansion（com.android.vending.expansion.zipfile）已从依赖移除，
     // 本应用不使用 OBB 扩展资源。这里给出空实现，保证调用点 getAssetFileDescriptor() 仍能编译
     // （直接返回 null 会让调用点因返回 Object 而报「找不到符号」）。
     public static class ObbFile {
@@ -259,7 +259,7 @@ public class Cocos2dxHelper {
 
     private static native void nativeSetContext(final Context pContext, final AssetManager pAssetManager);
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void nativeSetAudioDeviceInfo(boolean isSupportLowLatency, int deviceSampleRate, int audioBufferSizeInFames) {  }
 
     public static String getCocos2dxPackageName() {

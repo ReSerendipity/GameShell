@@ -301,7 +301,7 @@ public class ContainerFileManagerFragment extends BaseFileManagerFragment<FileIn
             }
 
             if (type == FileInfo.Type.FILE) {
-                // GalgameShell：文件图标保留本色（真实文件位图），不用白描边
+                // GameShell：文件图标保留本色（真实文件位图），不用白描边
                 holder.imageView.clearColorFilter();
                 holder.imageView.setImageResource(R.drawable.container_file);
                 LoadIconTask loadIconTask = (LoadIconTask)holder.imageView.getTag();
@@ -312,7 +312,7 @@ public class ContainerFileManagerFragment extends BaseFileManagerFragment<FileIn
                 holder.imageView.setTag(loadIconTask);
             }
             else {
-                // GalgameShell：文件夹/盘符矢量图标着白色，落在品牌紫圆底盘上更清晰
+                // GameShell：文件夹/盘符矢量图标着白色，落在品牌紫圆底盘上更清晰
                 holder.imageView.setColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.imageView.setImageResource((Integer)getIconForFile(item));
             }
@@ -321,7 +321,7 @@ public class ContainerFileManagerFragment extends BaseFileManagerFragment<FileIn
             holder.runButton.setOnClickListener((v) -> openFile(item));
             holder.menuButton.setOnClickListener((v) -> showListItemMenu(v, item));
 
-            // GalgameShell：点整行进入目录（文件夹）/ 启动文件；子按钮各自消费点击，互不冲突
+            // GameShell：点整行进入目录（文件夹）/ 启动文件；子按钮各自消费点击，互不冲突
             holder.itemView.setOnClickListener((v) -> openFile(item));
         }
 

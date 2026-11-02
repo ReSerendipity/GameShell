@@ -36,7 +36,7 @@ public final class GalgameStoragePermission {
             return Environment.isExternalStorageManager();
         } catch (Throwable t) {
             // 部分 ROM 反射受限，按未授权处理，走引导
-            Log.w("GalgameShell", "isExternalStorageManager check failed: " + t);
+            Log.w("GameShell", "isExternalStorageManager check failed: " + t);
             return false;
         }
     }
@@ -79,7 +79,7 @@ public final class GalgameStoragePermission {
                 Intent fallback = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
                 activity.startActivity(fallback);
             } catch (Throwable t2) {
-                Log.w("GalgameShell", "open all-files-access settings failed: " + t2);
+                Log.w("GameShell", "open all-files-access settings failed: " + t2);
             }
         }
     }

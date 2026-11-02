@@ -29,7 +29,7 @@ screen main_menu():
         xalign 0.5
         yalign 0.5
         spacing 16
-        text "GalgameShell" size 52 color "#ffffff"
+        text "GameShell" size 52 color "#ffffff"
         text "Built-in Ren'Py Engine" size 30 color "#aaaaaa"
     # 短暂停留后自动进入 label start，便于直接截到对话画面
     timer 1.2 action Start()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 构建 GalgameShell 自带的 box64（glibc/arm64，供 Winlator 式 rootfs 使用）。
+# 构建 GameShell 自带的 box64（glibc/arm64，供 Winlator 式 rootfs 使用）。
 #
 # 为什么要自建：官方 winlator-app 只带 box64-0.4.4.tzst；本机启动链依赖
 # 上游 main 的 custommem 修复 + tools/box64/box64-galgameshell.patch 的三处私有改动

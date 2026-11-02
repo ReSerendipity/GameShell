@@ -33,7 +33,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
     private File workingDirOverride;
     private static final Object lock = new Object();
 
-    /** GalgameShell: run the guest with its own folder as cwd (game data/DLL lookups). */
+    /** GameShell: run the guest with its own folder as cwd (game data/DLL lookups). */
     public void setWorkingDirOverride(File dir) { this.workingDirOverride = dir; }
 
     @Override
@@ -106,7 +106,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         envVars.put("ANDROID_SYSVSHM_SERVER", rootDir+UnixSocketConfig.SYSVSHM_SERVER_PATH);
 
 
-        // GalgameShell: heal shim. Some kernels (e.g. ColorOS on 39-bit VA devices) refuse to add
+        // GameShell: heal shim. Some kernels (e.g. ColorOS on 39-bit VA devices) refuse to add
         // PROT_EXEC to wine's PE file mappings with EACCES; libmpshim rebuilds those mappings so
         // Windows programs can start. Injected only when the library is actually installed.
         File shim = new File(environment.getContext().getApplicationInfo().nativeLibraryDir, "libmpshim.so");

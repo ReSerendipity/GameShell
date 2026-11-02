@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""生成 GalgameShell 品牌图标位图（无需 Pillow，纯标准库光栅化 + PNG 编码）。
+"""生成 GameShell 品牌图标位图（无需 Pillow，纯标准库光栅化 + PNG 编码）。
 
 为什么需要它：
 - 上游 Winlator 的 `mipmap-*/ic_launcher.png`（蓝色窗口图标）与 `drawable/icon_notification.png`

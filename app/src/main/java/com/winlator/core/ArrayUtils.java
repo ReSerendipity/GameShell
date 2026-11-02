@@ -83,7 +83,7 @@ public abstract class ArrayUtils {
             if (i < length) {
                 int j = i + 1;
                 int end = j + value.length - 1;
-                // GalgameShell：加 j < length 边界。上游原实现只判 j < end，
+                // GameShell：加 j < length 边界。上游原实现只判 j < end，
                 // 模式串前缀命中缓冲区尾部、部分匹配延伸出块时 array[j] 越界
                 // （AIOOBE length=4096 index=4096；FrameRating 读 box64 版本串时真机触发）。
                 for (int k = 1; j < end && j < length && array[j] == value[k]; j++, k++);

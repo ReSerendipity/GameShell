@@ -166,7 +166,7 @@
                 <TextView style="@style/SwissRowTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="桌面快捷方式" />
                 <TextView style="@style/SwissMeta" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" />
             </LinearLayout>
-            <!-- GalgameShell 第六轮：游戏内菜单（右上角☰）项显隐——高级项默认隐藏 -->
+            <!-- GameShell 第六轮：游戏内菜单（右上角☰）项显隐——高级项默认隐藏 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -290,7 +290,7 @@
             </LinearLayout>
 
             <LinearLayout android:id="@+id/rowAbout" style="@style/SwissRow">
-                <TextView style="@style/SwissRowTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="关于 GalgameShell" />
+                <TextView style="@style/SwissRowTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="关于 GameShell" />
                 <TextView android:id="@+id/TVVersion" style="@style/SwissMeta" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="11.5" />
             </LinearLayout>
 

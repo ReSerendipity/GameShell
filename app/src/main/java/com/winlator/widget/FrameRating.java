@@ -130,7 +130,7 @@ public class FrameRating extends FrameLayout implements Runnable {
             ((TextView)ramPanel.getChildAt(1)).setText(ramText);
 
             if (cpuInfo == null) {
-                // GalgameShell：主线程读文件加防御——任何异常（含历史越界 bug、
+                // GameShell：主线程读文件加防御——任何异常（含历史越界 bug、
                 // 文件缺失）降级为 "?" 并缓存，不再每帧重试 IO。
                 try {
                     cpuInfo = "Box64 v"+ Box64Utils.extractBinVersion(cpuPanel.getContext());

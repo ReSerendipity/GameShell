@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 设计系统：字阶 token（R1）。
+  GameShell 设计系统：字阶 token（R1）。
   五档：Display24 / Title18 / Body15 / Secondary13 / Caption11。
   颜色一律走 ?attr 主题 token，禁硬编码。
 -->

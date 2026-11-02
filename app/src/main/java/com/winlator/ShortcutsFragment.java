@@ -155,12 +155,12 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
 
             if (item.icon == null) {
                 int iconResId = item.file.isDirectory() ? R.drawable.container_folder : R.drawable.container_file_link;
-                // GalgameShell：矢量图标着白色，落在品牌紫圆底盘上更清晰
+                // GameShell：矢量图标着白色，落在品牌紫圆底盘上更清晰
                 holder.imageView.setColorFilter(android.graphics.Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN);
                 holder.imageView.setImageResource(iconResId);
             }
             else {
-                // GalgameShell：真实游戏图标（位图）保留本色
+                // GameShell：真实游戏图标（位图）保留本色
                 holder.imageView.clearColorFilter();
                 holder.imageView.setImageBitmap(item.icon);
             }
@@ -177,7 +177,7 @@ public class ShortcutsFragment extends BaseFileManagerFragment<Shortcut> {
             holder.runButton.setOnClickListener((v) -> runFromShortcut(item));
             holder.menuButton.setOnClickListener((v) -> showListItemMenu(v, item));
 
-            // GalgameShell：点整行进入目录（文件夹）/ 启动快捷方式；子按钮各自消费点击，互不冲突
+            // GameShell：点整行进入目录（文件夹）/ 启动快捷方式；子按钮各自消费点击，互不冲突
             holder.itemView.setOnClickListener((v) -> runFromShortcut(item));
         }
 

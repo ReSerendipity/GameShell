@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GalgameShell 冷启动闪屏（暗档）：紫黑底 + 同款品牌字形。见亮档说明。 -->
+<!-- GameShell 冷启动闪屏（暗档）：紫黑底 + 同款品牌字形。见亮档说明。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/galgame_splash_background_dark" />
     <item

@@ -54,19 +54,19 @@ public class Cocos2dxEditBoxHelper {
     private static int mViewTag = 0;
     private static float mPadding = 5.0f;
     //Call native methods
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void editBoxEditingDidBegin(int index) {  }
     public static void __editBoxEditingDidBegin(int index){
         editBoxEditingDidBegin(index);
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void editBoxEditingChanged(int index, String text) {  }
     public static void __editBoxEditingChanged(int index, String text){
         editBoxEditingChanged(index, text);
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void editBoxEditingDidEnd(int index, String text, int action) {  }
     public static void __editBoxEditingDidEnd(int index, String text, int action) {
         editBoxEditingDidEnd(index, text, action);

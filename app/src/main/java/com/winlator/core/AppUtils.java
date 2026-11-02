@@ -382,7 +382,7 @@ public abstract class AppUtils {
 
     public static void setActivityTheme(Activity activity) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        // GalgameShell：外壳默认亮色（品牌紫主题）；游戏运行屏/控件编辑器维持上游默认深色
+        // GameShell：外壳默认亮色（品牌紫主题）；游戏运行屏/控件编辑器维持上游默认深色
         int rawTheme = preferences.getInt("app_theme", SettingsFragment.APP_THEME_LIGHT);
         // 夜间资源按用户偏好切换（values-night 生效）；只在变化时调用，避免每次 onCreate 触发重建
         int nightMode = rawTheme == SettingsFragment.APP_THEME_DARK
@@ -394,7 +394,7 @@ public abstract class AppUtils {
         int appTheme = isGameScreen(activity)
             ? preferences.getInt("app_theme", SettingsFragment.APP_THEME_DARK)
             : rawTheme;
-        // GalgameShell：外壳与游戏运行屏统一走 Swiss 主题，明暗由 values-night 反相同一批颜色
+        // GameShell：外壳与游戏运行屏统一走 Swiss 主题，明暗由 values-night 反相同一批颜色
         if (appTheme == SettingsFragment.APP_THEME_LIGHT || appTheme == SettingsFragment.APP_THEME_DARK) {
             activity.setTheme(isGameScreen(activity)
                 ? R.style.GalgameSwissThemeFullscreen : R.style.GalgameSwissTheme);

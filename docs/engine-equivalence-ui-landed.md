@@ -144,7 +144,7 @@
 
 ```bash
 export MSYS_NO_PATHCONV=1
-cd /c/Users/Doro/APP/repository/GalgameShell   # 本机克隆位
+cd /c/Users/Doro/APP/repository/GameShell   # 本机克隆位
 # 1) 安装
 adb -s dc57ebe3 install -r app/build/outputs/apk/debug/app-debug.apk
 
@@ -153,13 +153,13 @@ adb -s dc57ebe3 install -r app/build/outputs/apk/debug/app-debug.apk
 #    b. Ren'Py（Route.B，原生）→ tools/renpy-testgame 或设备上已有测试游戏
 #    c. Siglus（Route.A，容器）→ 库内启动应仍走 XServerDisplayActivity，不得退化
 adb -s dc57ebe3 shell am start -n com.winlator/com.winlator.GalgameMainActivity
-adb -s dc57ebe3 logcat -d | grep -E "GameLauncher|GalgameShell: import"
+adb -s dc57ebe3 logcat -d | grep -E "GameLauncher|GameShell: import"
 
 # 3) 取证 + 客观像素分析（模型不"看"图，用统计替代主观描述）
 adb -s dc57ebe3 shell screencap -p /sdcard/ui.png
-adb -s dc57ebe3 pull /sdcard/ui.png C:/Users/Doro/Desktop/GalgameShell验证截图/
+adb -s dc57ebe3 pull /sdcard/ui.png C:/Users/Doro/Desktop/GameShell验证截图/
 # 注：analyze_png.py 位于 .workbuddy/verify/（本地不入库目录）
-python .workbuddy/verify/analyze_png.py C:/Users/Doro/Desktop/GalgameShell验证截图/ui.png
+python .workbuddy/verify/analyze_png.py C:/Users/Doro/Desktop/GameShell验证截图/ui.png
 ```
 
 验收判据：

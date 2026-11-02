@@ -18,7 +18,7 @@
 
 -dontobfuscate
 
-# GalgameShell：内置原生引擎（Kirikiroid2 / cocos2dx）。
+# GameShell：内置原生引擎（Kirikiroid2 / cocos2dx）。
 # libgame.so 的 JNI 按硬编码类名 org/tvp/kirikiri2/KR2Activity 反射回调，
 # 原生方法按名字绑定（RegisterNatives 短名），压缩器不得裁掉它们。
 -keep class org.tvp.kirikiri2.KR2Activity { *; }
@@ -27,7 +27,7 @@
 -keepclassmembers class org.cocos2dx.lib.** { native *; }
 -keep class com.winlator.galgame.engine.** { *; }
 
-# GalgameShell：内置 Ren'Py 运行时 Java 壳（SDL2 / renpy / jnius / jtar）。
+# GameShell：内置 Ren'Py 运行时 Java 壳（SDL2 / renpy / jnius / jtar）。
 # librenpython.so 内静态链入的 SDL2 在 JNI_OnLoad 对 org/libsdl/app/SDLActivity
 # 做整表 RegisterNatives——R8 shrinking 会裁掉“只被 C 调用”的方法，任一缺失整表即失败
 # （真机实证：E SDL: Failed to register methods of org/libsdl/app/SDLActivity → native crash）。

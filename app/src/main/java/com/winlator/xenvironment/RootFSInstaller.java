@@ -44,7 +44,7 @@ public abstract class RootFSInstaller {
         }
     }
 
-    // GalgameShell R2：宿主契约化——参数由 MainActivity 降级为 FragmentActivity
+    // GameShell R2：宿主契约化——参数由 MainActivity 降级为 FragmentActivity
     public static void install(final FragmentActivity activity) {
         AppUtils.keepScreenOn(activity);
         RootFS rootFS = RootFS.find(activity);

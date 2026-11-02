@@ -71,7 +71,7 @@ public abstract class ProcessHelper {
         int pid = -1;
         try {
             ProcessBuilder processBuilder = (new ProcessBuilder(splitCommand(command))).directory(workingDir);
-            // GalgameShell: keep the last run's output on disk instead of /dev/null so
+            // GameShell: keep the last run's output on disk instead of /dev/null so
             // launch failures are diagnosable; overwritten on every exec. 开启 Wine 调试
             // （DebugDialog 回调）时也必须落盘，否则诊断向导读不到任何输出。
             File logFile = new File("/data/data/com.winlator/files/wine_exec.log");

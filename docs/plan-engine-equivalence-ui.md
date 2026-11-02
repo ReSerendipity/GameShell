@@ -1,6 +1,6 @@
-# GalgameShell — 前置简报：Winlator 容器「引擎化」+ 前端 UI 个性化
+# GameShell — 前置简报：Winlator 容器「引擎化」+ 前端 UI 个性化
 
-> **用途**：本文件是交给新对话的「前置信息」。你（新会话的 agent）接手 GalgameShell 的这两项功能开发：
+> **用途**：本文件是交给新对话的「前置信息」。你（新会话的 agent）接手 GameShell 的这两项功能开发：
 > ① 把 Winlator 容器/Wine 路线提升为与内置原生引擎（Krkr / RenPy）**等价的一等引擎**；
 > ② 对自有前端 UI 做四项个性化。
 > 下面是所有已核实事实、硬性约束、已批准计划与已拍板决策。**开始写代码前，请先 `git status` 确认工作树状态，并 Read 下列关键文件以核对当前代码（本简报基于 2026-10-05 的代码快照，可能已有变动）。**
@@ -15,7 +15,7 @@
 
 ## 1. 项目身份与核心铁律（务必遵守）
 
-- **项目**：Winlator **v11.2** 的 fork（安卓端 Galgame 运行器）。上游 `brunodev85/winlator-app`，本仓 `ReSerendipity/GalgameShell`，包名 `com.winlator`，`versionName "11.2"`。
+- **项目**：Winlator **v11.2** 的 fork（安卓端 Galgame 运行器）。上游 `brunodev85/winlator-app`，本仓 `ReSerendipity/GameShell`，包名 `com.winlator`，`versionName "11.2"`。
 - **【零改铁律】** 不得修改上游 Winlator 核心文件，CI 有 rebase-guard 校验：
   - ❌ **绝不碰** `Container.java` / `LocaleHelper.java` / `values/strings.xml`（默认 `app/src/main/res/values/strings.xml`）。
   - ✅ `app/src/main/res/values/styles.xml` **可改**（加主题/属性，已有 `GalgameMainTheme`）。
@@ -65,7 +65,7 @@
 
 ### 2.7 入口与主题
 - `GalgameMainActivity`（exported=true）启动即游戏库；R2 底部导航（游戏库 / 容器 / 工具 / 设置）。
-- `GalgameMainTheme`（在 `styles.xml`，可改）已是自有主题；`app_name` 已品牌化为 `GalgameShell`（写在 `values/strings.xml` 与 `values-zh-rCN/strings.xml` —— 注意这已轻微触碰默认 `strings.xml`，**后续品牌文案请改用新增资源文件，勿再改 `values/strings.xml`**）。
+- `GalgameMainTheme`（在 `styles.xml`，可改）已是自有主题；`app_name` 已品牌化为 `GameShell`（写在 `values/strings.xml` 与 `values-zh-rCN/strings.xml` —— 注意这已轻微触碰默认 `strings.xml`，**后续品牌文案请改用新增资源文件，勿再改 `values/strings.xml`**）。
 - 上游屏：`ContainersFragment`、`ContainerFileManagerFragment`、以及 `XServerDisplayActivity` 等；UI 个性化 §C4 要决定它们的显隐/改名。
 
 ---
@@ -93,7 +93,7 @@
 > 合规：新素材 / 新布局走新增资源与 `galgame.ui` 包；`styles.xml` 可加主题；**绝不改 `values/strings.xml`**（新字符串进 `values-zh-rCN/` 或新增 `galgame_strings.xml`）。
 - **C1 图标 / 闪屏品牌**：替换 launcher 图标（含 adaptive icon 前景/背景）、通知图标，新增 splash drawable + 在 manifest / 主题引用，去掉残留 Winlator 图标辨识。
 - **C2 品牌色板**：在 `GalgameMainTheme` 用 `?attr` 定义品牌色（如 `?attr/galgamePrimary` 等），统一游戏库卡片 / 顶栏 / 按钮；**消除 `galgame.ui` 布局里的硬编码颜色**。
-- **C3 游戏库 / 首页布局**：封面卡片网格、空状态、`FAB`、顶栏标题「GalgameShell」视觉打磨（`GalgameLibraryActivity` / `GalgameLibraryAdapter` / `GalgameHomeFragment`）。
+- **C3 游戏库 / 首页布局**：封面卡片网格、空状态、`FAB`、顶栏标题「GameShell」视觉打磨（`GalgameLibraryActivity` / `GalgameLibraryAdapter` / `GalgameHomeFragment`）。
 - **C4 上游屏幕显隐**：游戏库为主入口；上游 Winlator 屏（`ContainersFragment` / `ContainerFileManagerFragment`）**改名或隐藏**（从导航与入口移除/重命名，**不删类**），让自有 UI 成为绝对主入口。
 
 ### 阶段 D — 验证 & 提交策略
@@ -103,7 +103,7 @@
 ---
 
 ## 4. 验证手法（模型读不了图，用客观像素分析替代主观描述）
-- 真机取证：`adb -s dc57ebe3 shell am start ...` / `screencap -p` / `adb pull` 到 `C:/Users/Doro/Desktop/GalgameShell验证截图/`。
+- 真机取证：`adb -s dc57ebe3 shell am start ...` / `screencap -p` / `adb pull` 到 `C:/Users/Doro/Desktop/GameShell验证截图/`。
 - 像素分析脚本：`.workbuddy/verify/analyze_png.py`（仓根相对路径；`.workbuddy/` 为本地不入库目录）（`python analyze_png.py <png>` 统计黑占比 / 占位灰(170,170,170) / 彩色占比 / 颜色数）。
 - UI 改动用截图核对布局/色板（可 `show_widget` 内联 `<img src="<仓内相对路径>">` 兜底预览）。
 

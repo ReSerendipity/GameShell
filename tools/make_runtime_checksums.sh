@@ -33,7 +33,7 @@ if [ "${TOTAL:-0}" -eq 0 ]; then
 fi
 
 {
-  echo "# GalgameShell 运行时资源 SHA-256 清单"
+  echo "# GameShell 运行时资源 SHA-256 清单"
   echo "# 生成时间: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
   echo "# 覆盖: assets/**/*.tzst|*.tar 与 jniLibs/**/*.so（路径相对 app/src/main）"
   echo "# 核验: 解包后 cd app/src/main && sha256sum -c <清单文件>"

@@ -32,7 +32,7 @@ import java.io.InputStream;
  */
 public final class GalgameSaveManager {
 
-    private static final String TAG = "GalgameShell: saves";
+    private static final String TAG = "GameShell: saves";
 
     /** 容器外存档根（对应 S: 盘）。 */
     public static final String SAVE_ROOT =

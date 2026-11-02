@@ -53,7 +53,7 @@
                     android:textColor="?attr/colorSecondaryText" />
             </LinearLayout>
 
-            <!-- GalgameShell: 品牌紫圆底盘托起应用图标，与容器卡片图标语言统一 -->
+            <!-- GameShell: 品牌紫圆底盘托起应用图标，与容器卡片图标语言统一 -->
             <FrameLayout
                 android:layout_width="84dp"
                 android:layout_height="84dp"

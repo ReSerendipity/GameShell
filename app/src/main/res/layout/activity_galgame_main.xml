@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell Swiss：单首页壳。无底部导航、无工具栏；
+  GameShell Swiss：单首页壳。无底部导航、无工具栏；
   游戏库 Fragment 自承报头，设置经报头齿轮进入。
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"

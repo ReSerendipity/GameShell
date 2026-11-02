@@ -26,7 +26,7 @@
             android:paddingTop="18dp"
             android:paddingBottom="18dp">
 
-            <!-- GalgameShell: 顶栏品牌图标（白色字形，呼应空态占位插画） -->
+            <!-- GameShell: 顶栏品牌图标（白色字形，呼应空态占位插画） -->
             <ImageView
                 android:layout_width="42dp"
                 android:layout_height="42dp"
@@ -98,7 +98,7 @@
             android:padding="32dp"
             android:visibility="gone">
 
-            <!-- GalgameShell: 品牌占位插画（替换系统 ic_menu_gallery） -->
+            <!-- GameShell: 品牌占位插画（替换系统 ic_menu_gallery） -->
             <ImageView
                 android:layout_width="72dp"
                 android:layout_height="72dp"

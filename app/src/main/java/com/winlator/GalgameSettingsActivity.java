@@ -88,7 +88,7 @@ public class GalgameSettingsActivity extends AppCompatActivity {
         findViewById(R.id.rowInputControls).setOnClickListener(v ->
                 startActivity(new Intent(this, GalgameInputControlsActivity.class)));
         findViewById(R.id.rowController).setOnClickListener(v -> {
-            // GalgameShell：上游 ExternalControllerBindingsActivity 必须带 profile_id/
+            // GameShell：上游 ExternalControllerBindingsActivity 必须带 profile_id/
             // controller_id 进入；此前无参跳入 → loadProfile(file(0)) 得 null → NPE
             // 闪退回页面（用户反馈「点击外接控制器直接回到页面」）。取第一个输入控制
             // 配置进入；一个配置都没有时引导先去创建。
@@ -110,7 +110,7 @@ public class GalgameSettingsActivity extends AppCompatActivity {
         });
         findViewById(R.id.rowShortcuts).setOnClickListener(v -> openAdvanced());
 
-        // GalgameShell 第六轮：游戏内菜单（右上角☰）高级项显隐——默认隐藏，按需打开。
+        // GameShell 第六轮：游戏内菜单（右上角☰）高级项显隐——默认隐藏，按需打开。
         // 永显项（触控模式/性能显示/键盘/退出）不设开关。
         bindMenuSwitch(R.id.SWMenuInputControls, "galgame_menu_input_controls");
         bindMenuSwitch(R.id.SWMenuFullscreen, "galgame_menu_fullscreen");

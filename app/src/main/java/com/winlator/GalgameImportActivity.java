@@ -444,7 +444,7 @@ public class GalgameImportActivity extends AppCompatActivity {
                 return;
             }
             if (result.route == EngineDetector.Route.B) {
-                // GalgameShell 第七轮：原生引擎游戏先「收纳」进应用私有目录
+                // GameShell 第七轮：原生引擎游戏先「收纳」进应用私有目录
                 // （files/galgame-native/<gameId>，完整复制）——不再引用源目录，
                 // 用户在库外改名/移动/误删不再损坏游戏；KR2 运行时产物也留在私有空间。
                 final File stored;

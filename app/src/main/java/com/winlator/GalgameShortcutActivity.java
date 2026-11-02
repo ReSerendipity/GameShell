@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 /**
- * GalgameShell 桌面快捷方式直启转发（第六轮）。
+ * GameShell 桌面快捷方式直启转发（第六轮）。
  *
  * <p>桌面 pinned shortcut 的 intent 目标必须是 exported 组件，而
  * {@link GalgameDetailActivity}（含完整启动链与自动启动支持

@@ -1,19 +1,19 @@
-GalgameShell — NOTICE
+GameShell — NOTICE
 =====================
 
-本文件汇总 GalgameShell（下称"本外壳"）的版权、许可证与第三方组件归属。
+本文件汇总 GameShell（下称"本外壳"）的版权、许可证与第三方组件归属。
 本项目遵守 LGPL-2.1（见同目录 LICENSE），并履行其"提供对应源码"的义务（A6 / AC-18）。
 
 1. 项目与内嵌组件
 -------------
-- 本项目：GalgameShell，独立的 galgame 安卓运行器。
+- 本项目：GameShell，独立的 galgame 安卓运行器。
 - 内嵌组件：winlator-app (https://github.com/brunodev85/winlator-app)，作者 BrunoDev85，
   许可证 LGPL-2.1 —— 以**源码组件**形式内嵌于本仓库 app/ 目录，声明方式同 §5/§8
   的 Kirikiroid2 / Ren'Py；对本组件的修改在 ci/zero-mod-exceptions.md 逐条登记
   （LGPL-2.1 §2 修改标注）。组件运行时二进制（.tzst / .so）按 README 从组件官方
   仓库取回，不随本源码仓分发。
 - 本外壳以 LGPL-2.1 发布，且公开源码：
-  https://github.com/ReSerendipity/GalgameShell
+  https://github.com/ReSerendipity/GameShell
 
   对应源码获取方式（LGPL-2.1 §6 / AC-18）：
   - 应用内：「游戏库 → 关于」中列出源码地址；
@@ -108,4 +108,4 @@ GalgameShell — NOTICE
 - LGPL-2.1 全文见同目录 LICENSE（亦随 APK 分发于
   assets/licenses/LICENSE_LGPL-2.1.txt，及 assets/licenses/REN_PY_THIRD_PARTY.txt 组件清单）。
 - 本外壳对 Ren'Py 运行时的修改仅限 Java 壳剥离 Google Play Asset Delivery / IAP
-  （不影响 LGPL 组件本身），完整对应源码公开于 https://github.com/ReSerendipity/GalgameShell。
+  （不影响 LGPL 组件本身），完整对应源码公开于 https://github.com/ReSerendipity/GameShell。

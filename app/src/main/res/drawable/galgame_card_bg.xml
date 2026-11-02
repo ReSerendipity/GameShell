@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GalgameShell 圆角卡背景（主题感知）：填充=colorSecondarySurface，描边=colorSecondaryVariant。
+<!-- GameShell 圆角卡背景（主题感知）：填充=colorSecondarySurface，描边=colorSecondaryVariant。
      R1 设计系统；仅被 GalCard 样式引用，无 P 系列依赖。 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="?attr/colorSecondarySurface" />

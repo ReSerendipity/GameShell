@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# seed_and_merge.sh — 把 GalgameShell 增量层并入 winlator-app 上游克隆。
+# seed_and_merge.sh — 把 GameShell 增量层并入 winlator-app 上游克隆。
 # 用法（在本机直连网络下，上游克隆成功后执行）：
 #   bash scripts/seed_and_merge.sh <上游克隆目录>
 #
@@ -8,7 +8,7 @@
 set -euo pipefail
 
 UP="${1:-}"
-SELF="$(cd "$(dirname "$0")/.." && pwd)"   # GalgameShell 仓库根
+SELF="$(cd "$(dirname "$0")/.." && pwd)"   # GameShell 仓库根
 
 if [ -z "$UP" ] || [ ! -d "$UP/app/src/main" ]; then
   echo "❌ 用法: bash scripts/seed_and_merge.sh <上游克隆目录>" >&2
@@ -41,7 +41,7 @@ if git diff --cached --quiet; then
 else
   git -c user.email="${GIT_AUTHOR_EMAIL:-259081123+ReSerendipity@users.noreply.github.com}" \
       -c user.name="${GIT_AUTHOR_NAME:-ReSerendipity}" \
-      commit -q -m "GalgameShell: 并入增量层（engine_presets / galgame_strings / com.winlator.galgame 包 / CI）"
+      commit -q -m "GameShell: 并入增量层（engine_presets / galgame_strings / com.winlator.galgame 包 / CI）"
   echo "✅ 已提交 galgame 增量层"
 fi
 

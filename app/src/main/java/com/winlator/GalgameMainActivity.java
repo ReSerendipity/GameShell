@@ -21,7 +21,7 @@ import com.winlator.core.PreloaderDialog;
 import com.winlator.xenvironment.RootFSInstaller;
 
 /**
- * GalgameShell Swiss：单首页壳。
+ * GameShell Swiss：单首页壳。
  *
  * <p>启动即游戏库（{@link GalgameHomeFragment}），取消底部导航与顶部工具栏；
  * 设置经游戏库报头的齿轮进入 {@code GalgameSettingsActivity}。

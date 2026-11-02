@@ -201,7 +201,7 @@ public class Cocos2dxVideoHelper {
         
     }
     
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      public static void nativeExecuteVideoCallback(int index,int event) {  }
     
     OnVideoEventListener videoEventListener = new OnVideoEventListener() {

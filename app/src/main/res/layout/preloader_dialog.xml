@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 启动加载浮层（原上游 preloader 样式品牌化，2026-10-25）：
+  GameShell 启动加载浮层（原上游 preloader 样式品牌化，2026-10-25）：
   全屏 90% 黑遮罩 + 居中竖排——GALGAMESHELL 大写字距标 / 主文案 / 2dp 细进度条，
   与库页、抽屉头的 Swiss 纸面语言一致；不再引用 Winlator 的 preloaderBackground /
   progressBarIndeterminateImage attr。@+id/TextView 保留（PreloaderDialog.setText 用）。

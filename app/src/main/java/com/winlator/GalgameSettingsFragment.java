@@ -70,7 +70,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * GalgameShell R3 设置屏（自有屏，替代上游 {@link SettingsFragment} 在底部导航壳中的使用）。
+ * GameShell R3 设置屏（自有屏，替代上游 {@link SettingsFragment} 在底部导航壳中的使用）。
  *
  * <p>逻辑移植自上游 {@link SettingsFragment}：复用 {@code settings_fragment} 布局与上游共享常量
  * （{@link SettingsFragment#APP_THEME_LIGHT} / {@link SettingsFragment#APP_THEME_DARK} /
@@ -99,7 +99,7 @@ public class GalgameSettingsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
-        // GalgameShell R3：PreloaderDialog 优先经 GalgameHost 取得，回退新建
+        // GameShell R3：PreloaderDialog 优先经 GalgameHost 取得，回退新建
         final Activity activity = getActivity();
         preloaderDialog = (activity instanceof GalgameHost)
             ? ((GalgameHost)activity).getPreloaderDialog()
@@ -231,7 +231,7 @@ public class GalgameSettingsFragment extends Fragment {
         final int oldLCIndex = sLanguage.getSelectedItemPosition();
 
         view.findViewById(R.id.BTReinstallSystemFiles).setOnClickListener((v) -> {
-            // GalgameShell R2：宿主契约化——install 参数已降级为 FragmentActivity
+            // GameShell R2：宿主契约化——install 参数已降级为 FragmentActivity
             ContentDialog.confirm(context, R.string.do_you_want_to_reinstall_system_files, () -> RootFSInstaller.install(getActivity()));
         });
 
@@ -293,7 +293,7 @@ public class GalgameSettingsFragment extends Fragment {
             }
             else if (preferences.contains("wine_debug_channels")) editor.remove("wine_debug_channels");
 
-            // GalgameShell R3：宿主为底部导航壳，无上游抽屉 NavigationView；
+            // GameShell R3：宿主为底部导航壳，无上游抽屉 NavigationView；
             // 主题/语言变更需重启 Activity 生效，其余设置直接留存当前页。
             if (editor.commit()) {
                 if (restartApp) {
@@ -520,7 +520,7 @@ public class GalgameSettingsFragment extends Fragment {
         }
     }
 
-    // GalgameShell R2：参数由 AppCompatActivity 放宽到 Context（宿主可为任意 FragmentActivity 壳）
+    // GameShell R2：参数由 AppCompatActivity 放宽到 Context（宿主可为任意 FragmentActivity 壳）
     public static void resetPreferenceVersions(Context activity) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         SharedPreferences.Editor editor = preferences.edit();

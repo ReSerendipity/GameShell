@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.main_activity);
 
         drawerLayout = findViewById(R.id.DrawerLayout);
-        // GalgameShell：抽屉开合遮罩品牌紫半透，过渡更精致
+        // GameShell：抽屉开合遮罩品牌紫半透，过渡更精致
         drawerLayout.setScrimColor(0x336A5AE0);
         NavigationView navigationView = findViewById(R.id.NavigationView);
         navigationView.setNavigationItemSelectedListener(this);
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         this.openFileCallback = openFileCallback;
     }
 
-    // GalgameShell R2：实现 GalgameHost 契约（抽屉壳与新底部导航壳共用）
+    // GameShell R2：实现 GalgameHost 契约（抽屉壳与新底部导航壳共用）
     @Override
     public PreloaderDialog getPreloaderDialog() {
         return preloaderDialog;
@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         switch (item.getItemId()) {
             case R.id.menu_item_galgame_library:
-                // GalgameShell：主界面抽屉一级入口（此前藏在容器页 overflow 菜单，入口不清晰）
+                // GameShell：主界面抽屉一级入口（此前藏在容器页 overflow 菜单，入口不清晰）
                 startActivity(new android.content.Intent(this, com.winlator.galgame.ui.GalgameLibraryActivity.class));
                 // 游戏库是独立 Activity 非 fragment：恢复抽屉勾选到当前实际页面
                 int checkedId = currentFragment instanceof ShortcutsFragment ? R.id.menu_item_shortcuts
@@ -228,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void showFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
-            // GalgameShell：fragment 切换淡入淡出（复用游戏库的现代过渡动画）
+            // GameShell：fragment 切换淡入淡出（复用游戏库的现代过渡动画）
             .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
             .replace(R.id.FLFragmentContainer, fragment)
             .commit();

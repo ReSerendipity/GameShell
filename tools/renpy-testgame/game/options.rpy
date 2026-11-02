@@ -3,11 +3,11 @@
 # 引擎不提供默认 say/main_menu 屏，故本目录自带 screens.rpy。
 
 # options.rpy
-define config.name = "GalgameShellTest"
+define config.name = "GameShellTest"
 define config.version = "1.0"
 
 init python:
-    config.window_title = "GalgameShell RenPy Test"
+    config.window_title = "GameShell RenPy Test"
     config.main_menu_music = None
     config.has_sound = False
     config.has_music = False

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 设计系统：组件样式（R1）。
+  GameShell 设计系统：组件样式（R1）。
   自有屏统一弃用上游 FieldSet 范式，改用语义 token（?attr）+ 圆角卡。
   所有颜色一律 ?attr 引用主题 token，禁硬编码。
 -->

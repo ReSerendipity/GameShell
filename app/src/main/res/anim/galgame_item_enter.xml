@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 列表项入场动画：淡入 + 轻微上移。
+  GameShell 列表项入场动画：淡入 + 轻微上移。
   纯 XML 资源，不触碰任何上游 Java，零合并债。
 -->
 <set xmlns:android="http://schemas.android.com/apk/res/android"

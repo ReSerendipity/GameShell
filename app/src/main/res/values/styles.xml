@@ -5,7 +5,7 @@
         <item name="tabTextColor">?attr/colorSecondaryText</item>
         <item name="android:windowBackground">?attr/colorPrimarySurface</item>
         <item name="android:colorBackground">?attr/colorPrimarySurface</item>
-        <!-- GalgameShell：在公共祖先补 Material Components 基础属性，消除所有派生主题下 Material 控件
+        <!-- GameShell：在公共祖先补 Material Components 基础属性，消除所有派生主题下 Material 控件
              （底部导航/FAB/Snackbar）inflate 时反复刷屏的 "Failed to resolve attribute colorOnSurface" 告警；
              引用既有 token，亮/深档随子主题自动继承 -->
         <item name="colorSurface">?attr/colorPrimarySurface</item>
@@ -62,7 +62,7 @@
         <item name="progressBarIndeterminateImage">@drawable/progress_bar_indeterminate_dark</item>
     </style>
     <!-- 游戏库亮色主题别名：v29 起关闭 Force Dark（系统深色模式会强转暗色） -->
-    <!-- GalgameShell 品牌 token 基座（亮档）：游戏库专属主题与外壳亮主题共用同一套品牌值。
+    <!-- GameShell 品牌 token 基座（亮档）：游戏库专属主题与外壳亮主题共用同一套品牌值。
          抽出来是必须的——布局已全面改用 ?attr，主题若缺 token 会在 inflate 时直接抛
          Resources.NotFoundException（游戏库 Activity 走 GalgameLibraryTheme，不是 GalgameMainTheme）。 -->
     <style name="GalgameBrandTokensLight" parent="@style/AppThemeLight">
@@ -98,7 +98,7 @@
         <item name="cornerSize">14dp</item>
     </style>
 
-    <!-- GalgameShell 外壳主题：紫色品牌（与游戏库一致）+ 亮色界面，替代上游 AppThemeDark -->
+    <!-- GameShell 外壳主题：紫色品牌（与游戏库一致）+ 亮色界面，替代上游 AppThemeDark -->
     <style name="GalgameMainTheme" parent="@style/AppThemeBase">
         <item name="colorAccent">#FF6A5AE0</item>
         <item name="colorPrimary">#FF6A5AE0</item>
@@ -124,12 +124,12 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarColor">@color/swiss_paper</item>
         <item name="android:windowLightNavigationBar">true</item>
-        <!-- GalgameShell R1 语义 token（亮档） -->
+        <!-- GameShell R1 语义 token（亮档） -->
         <item name="colorSurfaceVariant">#FFF2F4FA</item>
         <item name="colorHairline">#FFEAEAF2</item>
         <item name="colorTextDisabled">#FFB6BCC8</item>
         <item name="colorOnAccent">#FFFFFFFF</item>
-        <!-- GalgameShell 品牌 token（亮档）：顶栏渐变起点/终点、chip 底与字、封面占位底色、
+        <!-- GameShell 品牌 token（亮档）：顶栏渐变起点/终点、chip 底与字、封面占位底色、
              以及主色上的次要文字（原 #D9FFFFFF 半透白） -->
         <item name="galgameBrandStart">#FF6A5AE0</item>
         <item name="galgameBrandEnd">#FF9B5DE8</item>
@@ -137,14 +137,14 @@
         <item name="galgameChipText">#FF5A6ACF</item>
         <item name="colorOnAccentSubtle">#D9FFFFFF</item>
         <item name="galgameCoverPlaceholder">#FFEDEFF2</item>
-        <!-- GalgameShell：补 Material Components 属性（库已声明 attr，主题此前未给值），消除底部导航/FAB/Snackbar
+        <!-- GameShell：补 Material Components 属性（库已声明 attr，主题此前未给值），消除底部导航/FAB/Snackbar
              等控件 inflate 时反复刷屏的 "Failed to resolve attribute colorOnSurface" 告警 -->
         <item name="colorSurface">#FFFFFFFF</item>
         <item name="colorOnSurface">#FF1F2430</item>
         <item name="android:windowAnimationStyle">@style/GalgameWindowAnim</item>
     </style>
 
-    <!-- GalgameShell 外壳深色主题：紫黑品牌色（设置里选「深色」时使用） -->
+    <!-- GameShell 外壳深色主题：紫黑品牌色（设置里选「深色」时使用） -->
     <!-- Swiss（04）：高级设置宿主的黑白主题；保留原布局结构，仅替换语义 token -->
     <style name="GalgameSwissTheme" parent="@style/GalgameMainTheme">
         <item name="colorPrimary">@color/swiss_ink</item>
@@ -208,19 +208,19 @@
         <!-- 深色档状态栏/导航栏用浅色图标，避免继承亮色主题的深色图标 -->
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <!-- GalgameShell R1 语义 token（深档） -->
+        <!-- GameShell R1 语义 token（深档） -->
         <item name="colorSurfaceVariant">#FF2A2938</item>
         <item name="colorHairline">#FF33324A</item>
         <item name="colorTextDisabled">#FF6B7280</item>
         <item name="colorOnAccent">#FFFFFFFF</item>
-        <!-- GalgameShell 品牌 token（深档）：同上，取紫黑梯度对应的深色值 -->
+        <!-- GameShell 品牌 token（深档）：同上，取紫黑梯度对应的深色值 -->
         <item name="galgameBrandStart">#FF32305A</item>
         <item name="galgameBrandEnd">#FF4A3F7A</item>
         <item name="galgameChipBackground">#FF2B2A44</item>
         <item name="galgameChipText">#FFA9B4FF</item>
         <item name="colorOnAccentSubtle">#B3F2F3F7</item>
         <item name="galgameCoverPlaceholder">#FF2A2938</item>
-        <!-- GalgameShell：补 Material Components 属性，消除 "Failed to resolve attribute colorOnSurface" 反复告警 -->
+        <!-- GameShell：补 Material Components 属性，消除 "Failed to resolve attribute colorOnSurface" 反复告警 -->
         <item name="colorSurface">#FF232230</item>
         <item name="colorOnSurface">#FFF2F3F7</item>
         <item name="android:windowAnimationStyle">@style/GalgameWindowAnim</item>
@@ -304,7 +304,7 @@
     <style name="ContentDialog" parent="@android:style/Theme.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
-        <!-- GalgameShell：上游 ?attr/popupMenuBackground 在本主题无解析来源（背景从未生效）。
+        <!-- GameShell：上游 ?attr/popupMenuBackground 在本主题无解析来源（背景从未生效）。
              对话框主题独立于 Activity，这里显式补齐品牌属性并按亮/深由代码选择 -->
         <item name="android:windowBackground">@drawable/swiss_dialog_bg</item>
         <item name="colorAccent">@color/swiss_ink</item>
@@ -313,7 +313,7 @@
         <item name="colorPrimaryText">@color/swiss_ink</item>
         <item name="colorSecondaryText">@color/swiss_muted</item>
     </style>
-    <!-- GalgameShell：ContentDialog 深色档（ContentDialog 构造按 Activity 主题亮度选择） -->
+    <!-- GameShell：ContentDialog 深色档（ContentDialog 构造按 Activity 主题亮度选择） -->
     <style name="ContentDialogDark" parent="@android:style/Theme.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>

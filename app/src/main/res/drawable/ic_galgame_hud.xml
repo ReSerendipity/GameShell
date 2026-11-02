@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 抽屉「性能显示」菜单图标：仪表盘剪影（半圆表盘 + 指针）。
+  GameShell 抽屉「性能显示」菜单图标：仪表盘剪影（半圆表盘 + 指针）。
   由 NavigationView itemIconTint 着色，仅提供单色剪影。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"

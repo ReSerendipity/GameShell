@@ -213,7 +213,7 @@ public class SettingsFragment extends Fragment {
         final int oldLCIndex = sLanguage.getSelectedItemPosition();
 
         view.findViewById(R.id.BTReinstallSystemFiles).setOnClickListener((v) -> {
-            // GalgameShell R2：宿主契约化——install 参数已降级为 FragmentActivity
+            // GameShell R2：宿主契约化——install 参数已降级为 FragmentActivity
             ContentDialog.confirm(context, R.string.do_you_want_to_reinstall_system_files, () -> RootFSInstaller.install(getActivity()));
         });
 
@@ -502,7 +502,7 @@ public class SettingsFragment extends Fragment {
         }
     }
 
-    // GalgameShell R2：参数由 AppCompatActivity 放宽到 Context（宿主可为任意 FragmentActivity 壳）
+    // GameShell R2：参数由 AppCompatActivity 放宽到 Context（宿主可为任意 FragmentActivity 壳）
     public static void resetPreferenceVersions(Context activity) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         SharedPreferences.Editor editor = preferences.edit();

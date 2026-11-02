@@ -90,7 +90,7 @@ public class ContainerDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(false);
-        // GalgameShell R4：PreloaderDialog 优先经 GalgameHost 取得（同 GalgameSettingsFragment 一致性）
+        // GameShell R4：PreloaderDialog 优先经 GalgameHost 取得（同 GalgameSettingsFragment 一致性）
         final Activity activity = getActivity();
         preloaderDialog = (activity instanceof GalgameHost)
             ? ((GalgameHost)activity).getPreloaderDialog()

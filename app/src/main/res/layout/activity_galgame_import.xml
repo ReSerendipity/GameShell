@@ -378,7 +378,7 @@
             </FrameLayout>
         </ScrollView>
 
-        <!-- GalgameShell 第六轮：导入（复制进容器）进度条 + 百分比 -->
+        <!-- GameShell 第六轮：导入（复制进容器）进度条 + 百分比 -->
         <LinearLayout
             android:id="@+id/LLImportProgress"
             android:layout_width="match_parent"

@@ -24,7 +24,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * GalgameShell 性能浮窗（2026-10-25 第五轮）：上游 FrameRating 只有三档且行项固定，
+ * GameShell 性能浮窗（2026-10-25 第五轮）：上游 FrameRating 只有三档且行项固定，
  * 本类提供<b>逐项可选</b>的系统指标浮窗——用户在游戏内抽屉「性能显示」多选：
  * FPS / CPU 使用率 / CPU 频率 / 系统内存 / 游戏进程内存 / GPU 型号 / 负载 / 整机功耗。
  *

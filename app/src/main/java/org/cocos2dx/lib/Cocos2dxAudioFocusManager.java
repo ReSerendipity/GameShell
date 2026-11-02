@@ -128,6 +128,6 @@ class Cocos2dxAudioFocusManager {
         });
     }
 
-    /** GalgameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
+    /** GameShell：libgame.so 未导出该 native（见 patch_natives2.py 取证说明），降级空实现避免 UnsatisfiedLinkError。 */
      private static void nativeOnAudioFocusChange(int focusChange) {  }
 }

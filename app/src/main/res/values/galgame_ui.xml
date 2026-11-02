@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GalgameShell 设计系统：品牌色板 token。
+  GameShell 设计系统：品牌色板 token。
   亮/深两档由主题属性（?attr/colorXxx）承载；这里只放品牌常量，
   供 drawable（渐变/chip/按钮）与主题共用，避免颜色散落硬编码。
 -->

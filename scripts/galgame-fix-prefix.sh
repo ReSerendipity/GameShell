@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# GalgameShell — wine prefix repair for a container
+# GameShell — wine prefix repair for a container
 #
 # Why this exists:
 #   * The shipped prefix templates are missing most DLL/driver stub files. Wine

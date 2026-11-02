@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * GalgameShell R2 工具 Tab：聚合工具入口（快捷方式 / 输入控制 / 外部控制器 / 关于）。
+ * GameShell R2 工具 Tab：聚合工具入口（快捷方式 / 输入控制 / 外部控制器 / 关于）。
  *
  * <p>点击经 {@link GalgameHost} 复用现有 Fragment / Activity / Dialog，不重复实现逻辑。
  */
@@ -57,7 +57,7 @@ public class GalgameToolsFragment extends Fragment {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                // GalgameShell R5：super.getView() 会用 ToolEntry.toString() 填 R.id.title，
+                // GameShell R5：super.getView() 会用 ToolEntry.toString() 填 R.id.title，
                 // 须显式写入 title 字段，否则行内显示对象哈希串
                 View row = super.getView(position, convertView, parent);
                 ToolEntry entry = entries.get(position);

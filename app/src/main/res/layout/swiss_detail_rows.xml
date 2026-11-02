@@ -130,7 +130,7 @@
         <TextView style="@style/SwissMeta" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" />
     </LinearLayout>
 
-    <!-- GalgameShell 第八轮：桌面快捷方式（从库长按菜单迁入详情页） -->
+    <!-- GameShell 第八轮：桌面快捷方式（从库长按菜单迁入详情页） -->
     <LinearLayout android:id="@+id/BTPinShortcut" style="@style/SwissRow">
         <LinearLayout
             android:layout_width="0dp"

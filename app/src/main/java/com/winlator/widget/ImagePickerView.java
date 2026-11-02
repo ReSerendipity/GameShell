@@ -126,7 +126,7 @@ public class ImagePickerView extends View implements View.OnClickListener {
 
         View browseButton = view.findViewById(R.id.BTBrowse);
         browseButton.setOnClickListener((v) -> {
-            // GalgameShell R2：宿主契约化（抽屉壳 / 新底部导航壳共用）
+            // GameShell R2：宿主契约化（抽屉壳 / 新底部导航壳共用）
             GalgameHost host = (GalgameHost)context;
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");

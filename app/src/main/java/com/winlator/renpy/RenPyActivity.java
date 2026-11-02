@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * GalgameShell 内置 Ren'Py 引擎宿主（继承上游 org.renpy.android.PythonSDLActivity）。
+ * GameShell 内置 Ren'Py 引擎宿主（继承上游 org.renpy.android.PythonSDLActivity）。
  *
  * <p>运行契约（已对 librenpython.so 的 start_python() 与 renpy 源码核实，详见
  * README.md「内嵌原生引擎」；完整运行契约属对内文档，仅本机保留、不随仓库分发）：
@@ -55,10 +55,10 @@ public class RenPyActivity extends PythonSDLActivity {
         // ANDROID_OLD_PUBLIC / ANDROID_APK 环境变量（renpy.android 与存档路径依赖它们）。
         super.preparePython();
 
-        // GalgameShell：把内置引擎从 assets 解包到 getFilesDir()。
+        // GameShell：把内置引擎从 assets 解包到 getFilesDir()。
         unpackEngine();
 
-        // GalgameShell：把外部游戏根目录写入 main.py 读取的标记文件。
+        // GameShell：把外部游戏根目录写入 main.py 读取的标记文件。
         writeGameDir(getIntent());
     }
 
