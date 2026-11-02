@@ -8,6 +8,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # zstd-jni 1.5.7-13+ 的 AAR metadata 要求 compileSdk 37+，当前 compileSdk 35 / AGP 8.6.1
+      # 不兼容；需与 AGP/compileSdk 升级同批处理，避免 Dependabot 单独升到不可构建版本。
+      - dependency-name: "com.github.luben:zstd-jni"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
