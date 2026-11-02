@@ -25,7 +25,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.navigation.NavigationView;
-import com.winlator.contentdialog.AboutDialog;
 import com.winlator.core.AppUtils;
 import com.winlator.core.Callback;
 import com.winlator.core.LocaleHelper;
@@ -217,9 +216,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 break;
             case R.id.menu_item_settings:
                 showFragment(new SettingsFragment());
-                break;
-            case R.id.menu_item_about:
-                (new AboutDialog(this)).show();
                 break;
         }
         return true;
