@@ -121,33 +121,22 @@ public class GalgameSettingsActivity extends AppCompatActivity {
         bindMenuSwitch(R.id.SWMenuPip, "galgame_menu_pip");
         bindMenuSwitch(R.id.SWMenuTouchpadHelp, "galgame_menu_touchpad_help");
 
-        findViewById(R.id.rowAbout).setOnClickListener(v -> {
-            // 关于弹窗：版本 + 说明 + 社交平台入口（可点击）
-            String social = "<br><br><b>社交平台</b><br>"
-                    + "<a href=\"https://github.com/ReSerendipity\">GitHub</a> · "
-                    + "<a href=\"https://modelscope.cn/profile/ReSerendipity\">魔搭 ModelScope</a> · "
-                    + "<a href=\"https://www.zhihu.com/people/6-50-73-59-83\">知乎</a><br>"
-                    + "<a href=\"https://space.bilibili.com/499527473\">B站</a> · "
-                    + "<a href=\"https://www.xiaohongshu.com/user/profile/6a606c140000000010000801\">小红书</a> · "
-                    + "<a href=\"https://www.kuaishou.com/profile/3x2sk6hj48i2mhs\">快手</a> · "
-                    + "<a href=\"https://www.douyin.com/user/MS4wLjABAAAAcEdOoxVlfk3Ulx_usqR-3PHW4xxp6wYzRmsuRI_-fHBigPETTKLsv4fknIpFq6sP\">抖音</a>";
-            String body = (getString(R.string.galgame_about_version) + "\n\n"
-                    + getString(R.string.galgame_about_message)).replace("\n", "<br>") + social;
-            AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle(R.string.galgame_about)
-                    .setMessage(android.text.Html.fromHtml(body, android.text.Html.FROM_HTML_MODE_LEGACY))
-                    .setPositiveButton(R.string.galgame_ok, null)
-                    .create();
-            dialog.setOnShowListener(d -> {
-                android.widget.TextView tv = dialog.findViewById(android.R.id.message);
-                if (tv != null) {
-                    tv.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
-                }
-            });
-            dialog.show();
-        });
-
-        SwitchCompat dev = findViewById(R.id.SWDevMode);
+        findViewById(R.id.rowAbout).setOnClickListener(v ->
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.galgame_about)
+                        .setMessage(getString(R.string.galgame_about_version) + "\n\n"
+                                + getString(R.string.galgame_about_message)
+                                + "\n\n社交平台\n"
+                                + "GitHub  https://github.com/ReSerendipity\n"
+                                + "魔搭 ModelScope  https://modelscope.cn/profile/ReSerendipity\n"
+                                + "知乎  https://www.zhihu.com/people/6-50-73-59-83\n"
+                                + "B站  https://space.bilibili.com/499527473\n"
+                                + "小红书  https://www.xiaohongshu.com/user/profile/6a606c140000000010000801\n"
+                                + "快手  https://www.kuaishou.com/profile/3x2sk6hj48i2mhs\n"
+                                + "抖音  https://www.douyin.com/user/MS4wLjABAAAAcEdOoxVlfk3Ulx_usqR-3PHW4xxp6wYzRmsuRI_-fHBigPETTKLsv4fknIpFq6sP")
+                        .setPositiveButton(R.string.galgame_ok, null)
+                        .show());
+itchCompat dev = findViewById(R.id.SWDevMode);
         boolean devOn = prefs.getBoolean("galgame_dev_mode", false);
         dev.setChecked(devOn);
         applyDev(devOn);
