@@ -2,24 +2,33 @@
 # -*- coding: utf-8 -*-
 """生成 GameShell 品牌图标位图（无需 Pillow，纯标准库光栅化 + PNG 编码）。
 
-为什么需要它：
-- 上游 Winlator 的 `mipmap-*/ic_launcher.png`（蓝色窗口图标）与 `drawable/icon_notification.png`
-  仍留在仓库里；虽 minSdk 26 起实际走 `mipmap-anydpi-v26/ic_launcher.xml`（自适应图标，
-  前景已是自有 `galgame_launcher_foreground`），但这些位图会被「关于」对话框等直接引用，
-  也是仓库里最后的 Winlator 图标辨识残留。
-- 本机无 Pillow，故用 zlib + struct 手写 PNG 编码，用有符号距离场做 4×4 超采样光栅化，
-  把 `galgame_launcher_foreground.xml` 的「窗口 + 酒杯」母题按同一套坐标（108 空间）重绘。
+图形来源（2026-11-01 换图）：
+- 母题是 DraftPeek 的定稿启动图标 **G34O 偏心窥圆**：九弦裁入圆、雾墨三级色阶
+  （#33475F）、电光蓝强调弦（#3178C6）、朱砂红眼（#C41E3A），底色 #F5F7FA（日夜一致）。
+- 几何数据逐字取自 `DraftPeek/docs/icon-design/icon-export-g34o/geometry.json`，落盘为
+  `tools/icon-geometry-g34o.json`；本脚本只做 100→108 空间换算（×1.08），不改一个坐标。
+  要换图请改这个 JSON（或重新从 DraftPeek 拷贝），不要在本文件里手调点位。
+- 桌面实际生效的是矢量层：`res/drawable/ic_launcher_foreground.xml` + `ic_launcher_monochrome.xml`
+  经 `res/mipmap-anydpi-v26/ic_launcher.xml` 组装成自适应图标。
+
+为什么不再产出各密度 mipmap PNG（2026-11-01 精简）：
+- minSdk 30 起 `mipmap-anydpi-v26` 恒定匹配，密度位图在系统里永远取不到。
+- 原先三处引用实测全部走不到：`layout/about_dialog.xml`（宿主 MainActivity 已非 launcher、
+  无人 start）、桌面快捷方式（只在游戏 exe 图标提取失败时才回落到 R.mipmap.ic_launcher）、
+  以及 manifest 的 android:icon（被 anydpi-v26 抢占）。
+- 与 DraftPeek 同构：工程内只留矢量，另存一份 512 位图作商店/文档素材。
+
+本脚本现在只产出两样：
+    app/src/main/res/drawable/icon_notification.png   通知栏小图标（48px 白剪影 + 透明底）
+    docs/icon/ic_launcher-512.png                     512 满幅归档图（商店/README 用）
 
 用法：
-    python tools/gen_brand_icons.py            # 覆盖写出全部位图
+    python tools/gen_brand_icons.py            # 覆盖写出
     python tools/gen_brand_icons.py --check    # 只校验目标文件是否已存在
 
-产物（原图均为 git 跟踪文件，`git checkout -- <path>` 即可回退）：
-    app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher.png
-    app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher_round.png
-    app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher_foreground.png
-    app/src/main/res/drawable/icon_notification.png
+产物均为 git 跟踪文件，`git checkout -- <path>` 即可回退。
 """
+import json
 import os
 import struct
 import sys
@@ -27,16 +36,45 @@ import zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RES = os.path.join(ROOT, "app", "src", "main", "res")
+DOCS_ICON = os.path.join(ROOT, "docs", "icon")
+GEOMETRY_PATH = os.path.join(ROOT, "tools", "icon-geometry-g34o.json")
 
-BRAND = (0x6A, 0x5A, 0xE0)          # 品牌紫（与 values/ic_launcher_background.xml 一致）
 WHITE = (0xFF, 0xFF, 0xFF)
 
-DENSITIES = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
+STORE_SIZE = 512            # 归档位图边长
+NOTIF_SIZE = 48             # 通知小图标边长
 
-GLYPH_SPAN = 0.68                   # 字形占图标边长比例（留出安全边距）
-ROUND_SPAN = 0.66
+CANVAS = 108.0              # 自适应图标画布边长（dp），与前景矢量同尺度
+NOTIF_SPAN = 0.92           # 通知图标里母题占画布的比例（留出安全边距）
 
-# ---- 几何基元（以 108 空间描述，与 galgame_launcher_foreground.xml 的 pathData 同尺度）----
+
+def hex_rgb(value):
+    value = value.lstrip("#")
+    return tuple(int(value[i:i + 2], 16) for i in (0, 2, 4))
+
+
+# ---- 几何基元（一律在 108 空间描述）----
+
+def segment(x1, y1, x2, y2, half_w):
+    """线段 + 两端圆帽（点到线段距离 <= half_w）：对应 PIL 的 line + 端点 ellipse。"""
+    dx, dy = x2 - x1, y2 - y1
+    len_sq = dx * dx + dy * dy
+
+    def inside(x, y):
+        t = ((x - x1) * dx + (y - y1) * dy) / len_sq if len_sq else 0.0
+        if t < 0.0:
+            t = 0.0
+        elif t > 1.0:
+            t = 1.0
+        cx, cy = x1 + t * dx, y1 + t * dy
+        return (x - cx) ** 2 + (y - cy) ** 2 <= half_w * half_w
+    return inside
+
+
+def circle(cx, cy, r):
+    def inside(x, y):
+        return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
+    return inside
 
 
 def rrect(x0, y0, x1, y1, r):
@@ -47,107 +85,94 @@ def rrect(x0, y0, x1, y1, r):
     return inside
 
 
-def rect(x0, y0, x1, y1):
-    def inside(x, y):
-        return x0 <= x <= x1 and y0 <= y <= y1
-    return inside
+def load_geometry(path):
+    """读 geometry.json，按 1.08 换算到 108 空间。
+
+    返回 (layers, bg, stroke_half, motif_box)：
+      layers 为 [(inside_fn, (r, g, b)), ...]，后画者压在前者之上；
+      motif_box 为母题包围盒（含线宽外扩），供通知图标放大用。
+    """
+    with open(path, encoding="utf-8") as f:
+        geo = json.load(f)
+    k = CANVAS / float(geo["size"])          # 100 空间 -> 108 空间
+    half_w = geo["sw"] * k / 2.0
+    layers = []
+    xs, ys = [], []
+    for c in geo["chords"]:
+        p1 = (c["x1"] * k, c["y1"] * k)
+        p2 = (c["x2"] * k, c["y2"] * k)
+        layers.append((segment(p1[0], p1[1], p2[0], p2[1], half_w), hex_rgb(c["col"])))
+        xs += [p1[0], p2[0]]
+        ys += [p1[1], p2[1]]
+    eye = geo["eye"]
+    ecx, ecy, er = eye["cx"] * k, eye["cy"] * k, eye["r"] * k
+    layers.append((circle(ecx, ecy, er), hex_rgb(eye["col"])))
+    xs += [ecx - er, ecx + er]
+    ys += [ecy - er, ecy + er]
+    motif_box = (min(xs) - half_w, min(ys) - half_w, max(xs) + half_w, max(ys) + half_w)
+    return layers, hex_rgb(geo["bg"]), half_w, motif_box
 
 
-def half_ellipse(cx, cy, rx, ry):
-    def inside(x, y):
-        if y < cy:
-            return False
-        return ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1.0
-    return inside
-
-
-def circle(cx, cy, r):
-    def inside(x, y):
-        return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
-    return inside
-
-
-def union(*fs):
-    return lambda x, y: any(f(x, y) for f in fs)
-
-
-def subtract(a, b):
-    return lambda x, y: a(x, y) and not b(x, y)
-
-
-# 「窗口 + 酒杯」：外框挖出标题栏横条，下方高脚杯（杯身、杯梗、杯座）
-WINDOW = rrect(37, 32, 71, 76, 7)
-TITLE_BAR = rect(36, 38.5, 72, 42.5)
-BOWL = union(rect(43, 47.5, 65, 51.5), half_ellipse(54, 51.5, 11, 9))
-STEM = rect(52.5, 51.5, 55.5, 69)
-FOOT = rrect(47.5, 69, 60.5, 72.8, 1.9)
-
-# 原矢量用 evenOdd 填充：「酒杯」是窗口里的**镂空**（紫底透出），而非叠加另一个白形。
-# 这里照同一意图实现：白窗口挖掉标题栏横条，再挖掉酒杯。
-CUP_REGION = union(BOWL, STEM, FOOT)
-
-GLYPH = subtract(subtract(WINDOW, TITLE_BAR), CUP_REGION)
-# 通知栏图标要小到 24dp 也认得出：镂空造型（窗口挖酒杯）在该尺寸只剩一圈轮廓+一个洞，
-# 故这里反过来用**实心酒杯**剪影——形状单纯、覆盖率高，缩到 24dp 仍是清晰的酒杯。
-GLYPH_NOTIFICATION = CUP_REGION
+LAYERS, BG, STROKE_HALF, MOTIF_BOX = load_geometry(GEOMETRY_PATH)
+# 通知栏小图标：系统只取 alpha 自行着色，故所有层一律用同一颜色（保留层序与形状）。
+MONO_LAYERS = [(fn, WHITE) for fn, _ in LAYERS]
 
 
 # ---- 光栅化 ----
 
+def resolve(gx, gy, layers, bg_shape, bg_color):
+    """该采样点的颜色：最上层命中的图形 > 底盘 > 全透明。"""
+    for inside, color in reversed(layers):
+        if inside(gx, gy):
+            return color[0], color[1], color[2], 255
+    if bg_shape is not None and bg_shape(gx, gy):
+        return bg_color[0], bg_color[1], bg_color[2], 255
+    return 0, 0, 0, 0
 
-def render(size, glyph, fg, bg_shape, bg_color, span, ss=4, src=None):
-    """把 108 空间的 glyph 映射到 size×size 画布中心（占 span 比例）。
 
-    src 可指定源矩形 (x0, y0, x1, y1)：用于把子形状（如酒杯）单独放大填满画布，
-    否则它会按母题里的原始占比（酒杯只占 108 画布的 ~5%）渲染得过小。
+def render(size, layers, bg_shape=None, bg_color=BG, ss=4, fit=None, span=1.0):
+    """把 108 空间的图形映射到 size×size 画布。
+
+    fit=None 时 108 画布满幅映射，与前景矢量同尺度；给出源包围盒 fit 时把该子区域放大
+    填满 span*size 并居中——通知图标需要，否则母题只占画布中心一小块。
+    超采样按面积平均，并用预乘 alpha 累加再除回，避免透明底边缘压暗。
     """
-    box = size * span
-    off = (size - box) / 2.0
-    scale = box / 108.0
-    if src is not None:
-        sx0, sy0, sx1, sy1 = src
-        sw = max(sx1 - sx0, 1e-6)
-        sh = max(sy1 - sy0, 1e-6)
-        scale = min(box / sw, box / sh)
-        off_x = (size - sw * scale) / 2.0
-        off_y = (size - sh * scale) / 2.0
+    if fit is None:
+        scale = size / CANVAS
+        off_x = off_y = 0.0
     else:
-        off_x = off_y = off
+        sx0, sy0, sx1, sy1 = fit
+        box = size * span
+        scale = min(box / max(sx1 - sx0, 1e-6), box / max(sy1 - sy0, 1e-6))
+        off_x = (size - (sx1 - sx0) * scale) / 2.0 - sx0 * scale
+        off_y = (size - (sy1 - sy0) * scale) / 2.0 - sy0 * scale
+
     step = 1.0 / ss
     rows = []
     for py in range(size):
         row = bytearray()
         for px in range(size):
-            fg_hits = 0
-            bg_hits = 0
+            sr = sg = sb = sa = 0.0
+            n = 0
             for sy in range(ss):
-                y = py + (sy + 0.5) * step
-                gy = (y - off_y) / scale + (sy0 if src is not None else 0.0)
+                gy = (py + (sy + 0.5) * step - off_y) / scale
                 for sx in range(ss):
-                    x = px + (sx + 0.5) * step
-                    gx = (x - off_x) / scale + (sx0 if src is not None else 0.0)
-                    if glyph(gx, gy):
-                        fg_hits += 1
-                    if bg_shape(x / size * 108.0, y / size * 108.0):
-                        bg_hits += 1
-            total = ss * ss
-            a_fg = fg_hits / total
-            if fg_hits:
-                r, g, b = fg
-                a = 255
-            elif bg_hits:
-                r, g, b = bg_color
-                a = 255
+                    gx = (px + (sx + 0.5) * step - off_x) / scale
+                    r, g, b, a = resolve(gx, gy, layers, bg_shape, bg_color)
+                    af = a / 255.0
+                    sr += r * af
+                    sg += g * af
+                    sb += b * af
+                    sa += af
+                    n += 1
+            alpha = sa / n
+            if alpha > 0.0:
+                r = int(round(sr / sa))
+                g = int(round(sg / sa))
+                b = int(round(sb / sa))
             else:
-                r, g, b, a = 0, 0, 0, 0
-            if bg_hits and fg_hits and fg_hits < total:
-                # 边缘：按覆盖率混合前景与底色，避免锯齿发白
-                mix = a_fg
-                r = int(fg[0] * mix + bg_color[0] * (1 - mix))
-                g = int(fg[1] * mix + bg_color[1] * (1 - mix))
-                b = int(fg[2] * mix + bg_color[2] * (1 - mix))
-                a = 255
-            row += struct.pack("BBBB", r, g, b, a)
+                r = g = b = 0
+            row += struct.pack("BBBB", r, g, b, int(round(alpha * 255)))
         rows.append(bytes(row))
     return rows
 
@@ -165,49 +190,43 @@ def write_png(path, size, rows):
         f.write(blob)
 
 
-# 酒杯在母题 108 画布里的包围盒（用于通知图标放大填满自身画布）
-CUP_BOX = (42.0, 46.5, 66.0, 73.8)
+def render_store(size=STORE_SIZE, corner=0.22):
+    """512 归档图：满幅 G34O + 22% 圆角（与 DraftPeek store-png 同规则）。"""
+    return render(size, LAYERS, rrect(0, 0, CANVAS, CANVAS, CANVAS * corner), BG)
 
 
-def write_notification(path, size=48):
-    """通知小图标：纯白酒杯剪影 + 透明底（系统只取 alpha 做遮罩并自行着色）。"""
-    rows = render(size, GLYPH_NOTIFICATION, WHITE, lambda x, y: False, WHITE,
-                  0.92, src=CUP_BOX)
+def write_notification(path, size=NOTIF_SIZE):
+    """通知小图标：纯白弦线剪影 + 透明底（系统只取 alpha 做遮罩并自行着色）。"""
+    rows = render(size, MONO_LAYERS, None, WHITE, fit=MOTIF_BOX, span=NOTIF_SPAN)
     write_png(path, size, rows)
+
+
+def targets():
+    return [
+        os.path.join(RES, "drawable", "icon_notification.png"),
+        os.path.join(DOCS_ICON, "ic_launcher-512.png"),
+    ]
 
 
 def main():
     check = "--check" in sys.argv
     made, missing = [], []
-    for density, size in DENSITIES.items():
-        d = os.path.join(RES, "mipmap-%s" % density)
-        if not os.path.isdir(d):
-            print("跳过（目录不存在）：%s" % d)
-            continue
-        targets = {
-            # (字形, 前景色, 底盘形状, 字形占比)
-            "ic_launcher.png": (GLYPH, WHITE, rrect(0, 0, 108, 108, 20), GLYPH_SPAN),
-            "ic_launcher_round.png": (GLYPH, WHITE, circle(54, 54, 54), ROUND_SPAN),
-            "ic_launcher_foreground.png": (GLYPH, WHITE, None, 0.66),
-        }
-        for name, (glyph, fg, bg_shape, span) in targets.items():
-            path = os.path.join(d, name)
-            if check:
-                (made if os.path.isfile(path) else missing).append(path)
-                continue
-            if bg_shape is None:
-                rows = render(size, glyph, fg, lambda x, y: False, WHITE, span)
-            else:
-                rows = render(size, glyph, fg, bg_shape, BRAND, span)
-            write_png(path, size, rows)
-            made.append(path)
 
     notif = os.path.join(RES, "drawable", "icon_notification.png")
-    if check:
-        (made if os.path.isfile(notif) else missing).append(notif)
-    else:
-        write_notification(notif)
-        made.append(notif)
+    store = os.path.join(DOCS_ICON, "ic_launcher-512.png")
+
+    for path in targets():
+        if check:
+            (made if os.path.isfile(path) else missing).append(path)
+            continue
+        d = os.path.dirname(path)
+        if not os.path.isdir(d):
+            os.makedirs(d)
+        if path == notif:
+            write_notification(path)
+        else:
+            write_png(path, STORE_SIZE, render_store())
+        made.append(path)
 
     if check:
         print("已存在 %d / 缺失 %d" % (len(made), len(missing)))
@@ -215,6 +234,8 @@ def main():
             print("  缺失：%s" % p)
         return 1 if missing else 0
 
+    print("G34O 偏心窥圆：弦 %d 条 + 眼 1 枚，底色 #%s" % (
+        len(LAYERS) - 1, "%02X%02X%02X" % BG))
     print("已生成 %d 个位图：" % len(made))
     for p in made:
         print("  %s" % os.path.relpath(p, ROOT))

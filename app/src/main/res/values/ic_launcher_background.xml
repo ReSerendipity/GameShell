@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- GameShell: 启动图标底色改品牌紫（配 drawable/galgame_launcher_foreground 白字形） -->
-    <color name="ic_launcher_background">#FF6A5AE0</color>
+    <!-- GameShell: 启动图标底色换为 DraftPeek G34O 的浅灰白 #F5F7FA（该稿日夜一致，
+         故不需要 values-night 覆盖；配 drawable/ic_launcher_foreground 弦线前景） -->
+    <color name="ic_launcher_background">#FFF5F7FA</color>
 </resources>
