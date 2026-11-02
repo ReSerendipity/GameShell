@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GameShell 闪屏底色（两档各一）。放在自有资源文件里，不碰 default strings/colors 之外的官方向量。 -->
+<!-- GameShell 闪屏底色。暗档不另起 key，由 values-night/galgame_colors.xml 覆盖同名
+     galgame_splash_background（主题走 setDefaultNightMode + -night 资源限定）。 -->
 <resources>
-    <color name="galgame_splash_background">#FF6A5AE0</color>
-    <color name="galgame_splash_background_dark">#FF32305A</color>
+    <!-- 亮档用 G34O 定稿底色 #F5F7FA；暗档覆盖为 swiss_paper #0E0E0E -->
+    <color name="galgame_splash_background">#FFF5F7FA</color>
 
     <!-- Swiss grid（04 视觉语言）：黑白纸面 + 单点红，无卡片无阴影 -->
     <color name="swiss_paper">#FFFFFFFF</color>

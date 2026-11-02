@@ -185,46 +185,9 @@
         <item name="android:layout_marginTop">14dp</item>
     </style>
 
-    <style name="GalgameMainThemeDark" parent="@style/AppThemeBase">
-        <item name="colorAccent">#FF8B7BF0</item>
-        <item name="colorPrimary">#FF32305A</item>
-        <item name="colorPrimaryDark">#FF23203F</item>
-        <item name="colorControlNormal">#FF5A5780</item>
-        <item name="colorPrimaryText">#FFF2F3F7</item>
-        <item name="colorSecondaryText">#FF9CA3AF</item>
-        <item name="colorPrimarySurface">#FF17161F</item>
-        <item name="colorSecondarySurface">#FF232230</item>
-        <item name="colorPrimaryVariant">#FF8B7BF0</item>
-        <item name="colorSecondaryVariant">#FF3A3950</item>
-        <item name="colorError">#FFEF5350</item>
-        <item name="popupMenuBackground">@drawable/content_dialog_background_dark</item>
-        <item name="toolboxBackground">@drawable/toolbox_dark</item>
-        <item name="panelBackground">@drawable/panel_background_dark</item>
-        <item name="preloaderBackground">@drawable/preloader_background_dark</item>
-        <item name="progressBarIndeterminateImage">@drawable/progress_bar_indeterminate_dark</item>
-        <item name="android:windowBackground">@drawable/galgame_splash_dark</item>
-        <item name="android:colorBackground">#FF17161F</item>
-        <item name="android:statusBarColor">#FF23203F</item>
-        <!-- 深色档状态栏/导航栏用浅色图标，避免继承亮色主题的深色图标 -->
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
-        <!-- GameShell R1 语义 token（深档） -->
-        <item name="colorSurfaceVariant">#FF2A2938</item>
-        <item name="colorHairline">#FF33324A</item>
-        <item name="colorTextDisabled">#FF6B7280</item>
-        <item name="colorOnAccent">#FFFFFFFF</item>
-        <!-- GameShell 品牌 token（深档）：同上，取紫黑梯度对应的深色值 -->
-        <item name="galgameBrandStart">#FF32305A</item>
-        <item name="galgameBrandEnd">#FF4A3F7A</item>
-        <item name="galgameChipBackground">#FF2B2A44</item>
-        <item name="galgameChipText">#FFA9B4FF</item>
-        <item name="colorOnAccentSubtle">#B3F2F3F7</item>
-        <item name="galgameCoverPlaceholder">#FF2A2938</item>
-        <!-- GameShell：补 Material Components 属性，消除 "Failed to resolve attribute colorOnSurface" 反复告警 -->
-        <item name="colorSurface">#FF232230</item>
-        <item name="colorOnSurface">#FFF2F3F7</item>
-        <item name="android:windowAnimationStyle">@style/GalgameWindowAnim</item>
-    </style>
+    <!-- GameShell：原 GalgameMainThemeDark 已删除。明暗档改由 AppUtils.setActivityTheme
+         调 AppCompatDelegate.setDefaultNightMode + values-night 反相同一批颜色实现，
+         该暗档主题自 Swiss 化之后无人引用（manifest 与 setTheme 都不走它）。 -->
 
     <style name="AppThemeFullscreenLight" parent="@style/AppThemeLight">
         <item name="android:windowFullscreen">true</item>

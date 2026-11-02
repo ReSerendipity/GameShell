@@ -13,8 +13,8 @@
     <attr name="colorTextDisabled" format="color" />
     <attr name="colorOnAccent" format="color" />
     <!-- GameShell 品牌 token（2026-10-05）：顶栏渐变 / chip 一组组件此前在布局与 drawable 里
-         写死颜色，导致 GalgameMainThemeDark 换了 token 也不生效（暗色档下这些部件仍是亮色）。
-         统一提到 attr，由 GalgameMainTheme / GalgameMainThemeDark 各给一套值。 -->
+         写死颜色，导致暗色档换了 token 也不生效（这些部件仍是亮色）。
+         统一提到 attr 由主题赋值；明暗现由 values-night 反相同一批颜色（原 GalgameMainThemeDark 已删）。 -->
     <attr name="galgameBrandStart" format="color" />
     <attr name="galgameBrandEnd" format="color" />
     <attr name="galgameChipBackground" format="color" />

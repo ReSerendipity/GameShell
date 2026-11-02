@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GameShell 冷启动闪屏（night 变体，由 -night 资源限定自动选中）：
+     深色纸面底 + 白色单色弦线窥圆。彩色前景的弦线是墨色（#1C2B3A 族），
+     在深底上不可读，故这里用 ic_launcher_monochrome 整体染白。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/galgame_splash_background" />
+    <item
+        android:width="132dp"
+        android:height="132dp"
+        android:gravity="center"
+        android:drawable="@drawable/ic_launcher_monochrome"
+        android:tint="#FFF2F2F2" />
+</layer-list>

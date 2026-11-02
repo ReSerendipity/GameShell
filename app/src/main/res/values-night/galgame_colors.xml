@@ -10,4 +10,8 @@
     <color name="swiss_faint">#FF6E6E6E</color>
     <color name="swiss_pressed">#FF1C1C1C</color>
     <color name="swiss_count">#40FFFFFF</color>
+
+    <!-- 闪屏底色（暗档）：此前无 night 覆盖，深色模式下冷启动会闪一整屏浅底。
+         取本档自己的 swiss_paper，与 UI 底色一致。 -->
+    <color name="galgame_splash_background">#FF0E0E0E</color>
 </resources>
