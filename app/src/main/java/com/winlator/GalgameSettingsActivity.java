@@ -124,10 +124,18 @@ public class GalgameSettingsActivity extends AppCompatActivity {
         findViewById(R.id.rowAbout).setOnClickListener(v ->
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.galgame_about)
-                        .setMessage(getString(R.string.galgame_about_version) + "\n\n" + getString(R.string.galgame_about_message))
+                        .setMessage(getString(R.string.galgame_about_version) + "\n\n"
+                                + getString(R.string.galgame_about_message)
+                                + "\n\n社交平台\n"
+                                + "GitHub  https://github.com/ReSerendipity\n"
+                                + "魔搭 ModelScope  https://modelscope.cn/profile/ReSerendipity\n"
+                                + "知乎  https://www.zhihu.com/people/6-50-73-59-83\n"
+                                + "B站  https://space.bilibili.com/499527473\n"
+                                + "小红书  https://www.xiaohongshu.com/user/profile/6a606c140000000010000801\n"
+                                + "快手  https://www.kuaishou.com/profile/3x2sk6hj48i2mhs\n"
+                                + "抖音  https://www.douyin.com/user/MS4wLjABAAAAcEdOoxVlfk3Ulx_usqR-3PHW4xxp6wYzRmsuRI_-fHBigPETTKLsv4fknIpFq6sP")
                         .setPositiveButton(R.string.galgame_ok, null)
                         .show());
-
         SwitchCompat dev = findViewById(R.id.SWDevMode);
         boolean devOn = prefs.getBoolean("galgame_dev_mode", false);
         dev.setChecked(devOn);
