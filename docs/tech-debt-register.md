@@ -2,7 +2,7 @@
 
 > 轻量登记（评估整改 P2-7，2026-10-11）。目的：为散文式「已知取舍」补上编号 / 登记日 / 偿还计划 / 状态，可被追债。
 > 状态取值：已登记 / 已计划 / 待偿还 / 已偿还 / **永久跳过**。
-> 来源：`engine-equivalence-ui-landed.md` §9、`local/README.internal.md` §2/§7、`box64-wine-launch-chain.md`、本评估报告。
+> 来源：`engine-equivalence-ui-landed.md` §9、`local/README.internal.md`（本地文档，未随仓库发布）§2/§7、`box64-wine-launch-chain.md`、本评估报告。
 
 | 编号 | 登记日 | 债项 | 影响 | 偿还计划 / 状态 |
 |---|---|---|---|---|
@@ -21,10 +21,8 @@
 | TD-13 | 2026-10-24 | 按键**到不了** Wine 客户程序：hook 全程无 `WM_KEYDOWN`；`+event` 全日志无 `FocusIn/FocusOut`；Winlator 的 X server 未实现焦点事件（`WindowManager.setFocus` 只记录字段，`events/` 下没有 FocusIn 事件类），Wine 侧也从未调 `XSetInputFocus` | 依赖键盘的路线不可用（功能键、Ctrl 组合、文字输入、用键盘推进对白） | 已登记，待设计：在 xserver 补 FocusIn/FocusOut 投递，或容器启动后由 app 主动把 X 焦点设到客户窗口；属上游 `xserver` 包，改动需登记零改例外 |
 | TD-14 | 2026-10-24 | KiriKiri 把主窗口固定放在虚拟屏 **(152,152)**；当"游戏窗口尺寸 == 容器屏幕尺寸"时画布整体右下偏移，**右侧约 156px、底部约 175px 落在屏外**（容器 1280x720 + 游戏 1280x720 实测） | 用户按可见位置点击会打偏，靠右/靠下的 UI 完全不可达 | **部分偿还（2026-10-24）**：导入与「改用 Wine 容器运行」时按引擎预设自动放大——`engine_presets.json` 新增 `screen_size` 字段，KIRIKIRI 预设给 **1920x1080**（`EnginePreset.screenSize` → `ImportFlow.buildContainerData` 写进容器 data）。真机验证两款：1920 容器 + 960x540 窗口画布完整可见、一次点中 START 进正片；`krkr_caste` 走「改用 Wine 容器运行」新建的容器 `screenSize` 直接就是 1920x1080，警告页→标题→从头开始→正文对白与背景均正常推进。**残留两点**：① 游戏内选 1920x1080 时仍会被裁（容器最高档就是 1920x1080，装不下 (152,152) 偏移），需要更高档位或"全屏启动"；② 本条改动之前导入的旧容器不会自动跟进，需用户在「运行环境分辨率」里手动改。**追加偿还（2026-10-25）**：残留①由「窗口画面铺满」修复一并解决——`GLRenderer.inBounds` 上界放宽为 `<=`，等屏窗口也获得居中 FullscreenTransformation，不再受 (152,152) 偏移裁切（真机 `krkr_caste` 1920 容器 31.8%→78.8%，见 real-device-verification.md §9） |
 | TD-15 | 2026-10-24 | KiriKiri 启动"窗口尺寸确认"对话框**每次必弹**：引擎级 `savedata\game.cfu` 只读不写、游戏级 `system.dat` mtime 不变，Alt+F4 或对话框内「終了」干净退出也不落盘 | 每次进游戏都要多点一次对话框，且用户不知道该选哪档 | 已登记（低优先）：属游戏/引擎在该环境下的持久化行为，非本 fork 缺陷；`game.cfu` 是纯文本 `NAME="\xNN..."` 格式（见 krkrz `environ/win32/ConfigFormUnit.cpp` 的 `SaveSetting`），但它只管引擎选项、管不到游戏自己的尺寸对话框；可在导入指引里建议"选一个不大于容器分辨率的尺寸" |
-
 | TD-16 | 2026-10-25 | `krkr_tobenai` 容器 xuser-16（1280x720）内启动流程挂起：480x280 主窗口映射后画面静止（标题美术）、8-40s 零变化、全区域点击无响应；`Decorated=N/Y` A/B 排除窗口铺满修复的副作用（画面零差异）。§8.4 当时在 1920x1080 容器全流程通过，疑与容器分辨率/该容器残留状态有关 | 该游戏本轮不可用作启动对话框自动应答的端到端样本；不影响其它游戏 | 已登记，待排查（对照实验：1920 容器重建复测） |
 | TD-17 | 2026-10-25 | AdvHD `advhd_toran` 加载器过 icu 关后仍崩：exe 静态导入 d3d11/d2d1/DirectWrite，Wine 的 d2d1 实现不完整（seh 未处理异常，32 位子进程） | AdvHD 引擎游戏可加载但渲染链崩 | **部分偿还（2026-10-26）**：dxwrapper 变体实验已跑（`docs/wine-dxwrapper-tuning.md` §3.2）——改 `wined3d` 后**不再崩于 d2d1**，引擎窗口与「起動チェック(警告)」对话框正常渲染（日文字体正确），但点 OK 后游戏自报 `Direct3D Initialize failed (6)` 中止：失败模式由「静默崩溃退回库页」改善为「渲染级有窗口 + 引擎可理解报错」，**仍未可玩**。预设 `advhd` 已改 wined3d。未偿：D3D 初始化失败本身（wined3d 的 GL 能力不足，见 tuning §5.2） |
-
 | TD-18 | 2026-10-26 | `GalgameDetailActivity.startForceContainer`（「改用 Wine 容器运行」）失败不回滚已建容器、成功也不 `markContainerized` | 库中同一游戏出现容器卡+原生卡两张；失败残留孤儿容器 | 已登记，待偿还（评估 robustness-assessment-2026-10.md §4；导入侧同型问题已在本轮修掉，见该文档 R6） |
 | TD-19 | 2026-10-26 | `GalgameNativeStore.store`「目标目录非空即返回」：磁盘满/进程被杀留下的半拷贝被当成品；`ImportFlow.copyDirectory` 对 `listFiles()==null` 静默返回（0 文件=成功） | 原生游戏缺文件且无提示；导入中途权限被收时复现 D1 老形态 | 已登记，待偿还（需续拷或校验和；评估 §4） |
 | TD-20 | 2026-10-26 | 「彻底删除」只删容器+S: 盘+索引，不删 `files/galgame-native/<id>` 收纳副本；`GalgameNativeStore.remove` 全仓零调用；删除结果不校验 | 确认文案承诺「连同游戏文件删除」却不兑现，数 GB 静默泄漏 | **已偿还（2026-10-26）**：批删与详情「从库中移除」都删收纳副本；批删校验容器目录/存档目录/收纳副本三项结果并汇总「N 个未完全删除」。真机验证：注入 2MB 收纳副本 + 索引条目后彻底删除，`files/galgame-native/` 归空、索引归 1 条 |
@@ -32,7 +30,6 @@
 | TD-22 | 2026-10-26 | 点卡片在主线程同步跑 `GameLauncher.decide → detectDeep`（深度 3、预算 4000 目录项 + 逐文件读魔数） | 大游戏目录卡顿/ANR | 已登记，待偿还（评估 §4） |
 | TD-23 | 2026-10-26 | `GalgameLanguageDetector` 弱信号「文件夹名含任意汉字 → zh_CN」：日文标题几乎必含汉字 → LCID 936、Shift-JIS 文本乱码；`GalgameLocaleInjector.reapply` 还会用同一误判纠正正确值 | 日文游戏被当中文跑 | 已登记，待偿还（评估 §4） |
 | TD-24 | 2026-10-26 | `GalgameSaveManager` 的 gameId 无校验：空串时存档目录指向 SAVE_ROOT 根（跨游戏串档）；`symlinkPortableSaves` 先 `FileUtils.delete(dir)` 再 symlink，symlink 失败即存档目录消失 | 导出/恢复串档；存档丢失 | **已偿还（2026-10-26）**：构造函数拒绝空 gameId（抛 IllegalArgumentException），详情页缺 gameId 直接退回列表；移档顺序改为「合并不完整就跳过链接 → 源目录删不掉就跳过 → symlink 后校验，未链上则把档拷回 → 同名不同内容留 `.bak-<ts>`」。未在真机诱导 symlink 失败（容器内该目录形态不常出现），以代码复核为准 |
-
 | TD-25 | 2026-10-26 | 显示标题只存在索引里；索引损坏/丢失后容器卡标题退化成 ASCII gameId（`______________H________-6b0d`），真机复验时实测 | 用户可见的名字丢失，只能靠用户记得原名重命名 | 已登记，待偿还：把 title 冗余进容器内 `galgame_overlay.json`，索引缺 title 时回落读取（导入时已写 overlay，加一个字段即可） |
 
 > **积压取舍（2026-10-24）**：TD-01 / TD-03 / TD-04 / TD-05 / TD-06 / TD-10 判定为**可事后解决**，

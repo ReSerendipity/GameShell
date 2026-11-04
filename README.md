@@ -128,7 +128,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 
 ### 使用示例
 
-1. 安装 APK 后打开应用，底部导航为「游戏库 / 容器管理 / 工具 / 设置」四个 Tab。
+1. 安装 APK 后打开应用，底部导航为「游戏库 / 容器管理 / 工具 / 设置」四个 Tab。（示例为改版前界面；改版后容器管理/工具从游戏详情进入，见上方截图注）
 2. 点「导入游戏」选择存放 galgame 的文件夹（启动 exe 须在所选文件夹顶层）。
 3. 向导自动检测引擎、创建容器、复制文件并注入日文环境。
 4. 回到游戏库，点封面墙中的游戏卡片即可启动。
@@ -139,7 +139,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 **Q：构建报错找不到 `librenpython.so` / `*.tzst`？**
 A：你还没补齐运行时资源。按上文「获取运行时资源」一节执行 `git restore --source=upstream/main --worktree -- app/src/main/assets app/src/main/jniLibs`。
 
-**Q：`./gradlew` 下载 gradle-8.14.5-bin.zip 失败（PKIX 报错）？**
+**Q：`./gradlew` 下载 gradle-9.8.2-bin.zip 失败（PKIX 报错）？**
 A：代理/TLS 拦截导致。先检查 `~/.gradle/wrapper/dists/` 是否有完整版本，有则直接调用其二进制加 `--offline`；详见 README 原文与 [`ci/pre-push`](ci/pre-push)。
 
 **Q：支持哪些引擎？**
@@ -163,6 +163,7 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 - [发布 / 回滚规范](docs/release-governance.md)
 - [技术债登记表](docs/tech-debt-register.md)
 - 完整文档索引见 [`docs/`](docs/)
+- docs 文档总索引：[docs/README.md](docs/README.md)（治理协作 / 记录台账 / 计划落地三组全链接）
 
 ### 贡献 / 安全 / 支持
 
@@ -282,7 +283,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 
 ### Usage
 
-1. Install the APK and open the app. Bottom navigation has four tabs: **Library / Containers / Tools / Settings**.
+1. Install the APK and open the app. Bottom navigation has four tabs: **Library / Containers / Tools / Settings**. (This example describes the pre-redesign UI; after the redesign, Containers/Tools are reached from the game detail screen — see the screenshot note above.)
 2. Tap **Import Game** and pick a folder containing your galgame (the launcher exe must be at the top level).
 3. The wizard detects the engine, creates a container, copies files, and injects Japanese locale.
 4. Return to the library and tap the game card to launch.
@@ -293,7 +294,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 **Q: Build fails with missing `librenpython.so` / `*.tzst`?**
 A: You haven't fetched the runtime assets yet. Run the `git restore --source=upstream/main --worktree -- …` step above.
 
-**Q: `./gradlew` fails downloading gradle-8.14.5-bin.zip (PKIX error)?**
+**Q: `./gradlew` fails downloading gradle-9.8.2-bin.zip (PKIX error)?**
 A: TLS interception in a proxy/VPN environment. Check `~/.gradle/wrapper/dists/` for a complete alternative version and invoke its binary with `--offline`. See the build notes in this file and [`ci/pre-push`](ci/pre-push).
 
 **Q: Which engines are supported?**

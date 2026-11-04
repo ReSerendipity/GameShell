@@ -15,9 +15,9 @@
 ## 1. 版本号规范
 
 - 遵循 **SemVer** `MAJOR.MINOR.PATCH`；预发布用 `-alpha.N` / `-beta.N` / `-rc.N`。
-- **唯一权威版本位**：`app/build.gradle` 中 `android.defaultConfig.versionName`（当前 **`11.2`**）；配套整数位 `android.defaultConfig.versionCode`（当前 **`33`**）随 versionName 同步递增。
+- **唯一权威版本位**：`app/build.gradle` 中 `android.defaultConfig.versionName`（当前 **`11.5`**，截至 2026-11-03）；配套整数位 `android.defaultConfig.versionCode`（当前 **`36`**）随 versionName 同步递增。
 - 必须同步的其它版本位：**无**（仓内跟踪文件树中仅 `app/build.gradle` 一处声明版本；`.workbuddy/`、`.qoder/`、`build/` 等本地忽略目录不计入）。
-- 版本位漂移校验：**待定（负责人：仓库所有者；触发条件：下一次发版前补一个版本一致性校验——或将 `versionName` 与 git tag 的比对挂入 release.yml 的 `validate-tag`，或新增类似 `tests/test_version_consistency.py` 的钉位测试）**。当前仓内无自动化钉位，漂一处不会自动判红。
+- 版本位漂移校验：**已由 `validate-tag` 校验 versionName（2026-11-04 复核：`.github/workflows/release.yml` 的 `validate-tag` 作业比对 tag 与 `app/build.gradle` 的 `versionName`，不一致即判红；`versionCode` 不在比对范围）**。`versionCode` 漂移暂无自动化钉位（待定：负责人仓库所有者；触发条件：下次发版前决策是否补钉位测试）。
 - 自动化方式：**手动 tag（人工）**；仓内无 release-please。流程：本地改 `app/build.gradle` 的 `versionName` / `versionCode` → 打 tag → push。
 
 ## 2. CHANGELOG 管理

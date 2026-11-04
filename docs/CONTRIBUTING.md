@@ -35,4 +35,4 @@ CI 在 `pull_request` 上逐提交校验（ci.yml rebase-guard job），缺签�
 LGPL-2.1（见 `LICENSE` / `NOTICE`）。引入新依赖前跑
 `python3 scripts/check_licenses.py gradle/libs.versions.toml`；
 新依赖必须同步 `NOTICE` 与 `scripts/check_licenses.py` 的 KNOWN 表（双同步约定）。
-上游回馈候选见 `UPSTREAM-PR-CHECKLIST.md`。
+上游回馈候选见 [`UPSTREAM-PR-CHECKLIST.md`](UPSTREAM-PR-CHECKLIST.md)。
