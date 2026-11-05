@@ -75,19 +75,27 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 #### 1. 克隆并补齐运行时资源
 
-本仓库**按设计不附带大二进制运行时**：Wine / Box64 运行时（`*.tzst`）与各架构原生库（`*.so`）不随源码分发。因此 clone 之后**不能直接 `./gradlew assembleDebug` 出完整可用的 APK**，需先从 Winlator 组件官方仓库补齐这部分资源（`upstream` 远端即组件官方仓库，兼作按需移植官方修复的来源）：
+本仓库的运行时资源**部分随源码分发**（2026-11-05 评估整改：修正此前「不附带大二进制」的不准确表述）：
+
+- **git 跟踪（7 个文件，84,315,138 字节 ≈ 80.4 MiB）**：box64 0.4.5 运行时 `app/src/main/assets/box64/box64-0.4.5.tzst` 与 `box64-0.4.5-gstfix.tzst`，以及 `app/src/main/jniLibs/arm64-v8a/` 下 5 个原生库 `librenpython.so` / `libgame.so` / `libffmpeg.so` / `libSDL2.so` / `libmpshim.so`。`.gitignore` 的 `*.tzst`/`*.so` 规则只挡**新增** untracked 文件，不影响这些已跟踪文件。
+- **不跟踪（clone 后缺失，需补齐）**：Wine 侧运行时 `rootfs.tzst`、`rootfs_patches.tzst`、`pulseaudio.tzst`、`container_pattern.tzst` 与 `wincomponents/`。因此 clone 之后**不能直接 `./gradlew assembleDebug` 出完整可用的 APK**，需先从 Winlator 组件官方仓库取回这部分资源（`upstream` 远端即组件官方仓库，兼作按需移植官方修复的来源）：
 
 ```bash
 git clone https://github.com/ReSerendipity/GameShell.git
 cd GameShell
 
-# 从上游取回被排除的运行时资源与 native 库（只落工作区，不写索引）
+# 只取回不入库的 Wine 侧运行时（按路径精确指定；只落工作区，不写索引）
 git remote add upstream https://github.com/brunodev85/winlator-app
 git fetch upstream
-git restore --source=upstream/main --worktree -- app/src/main/assets app/src/main/jniLibs
+git restore --source=upstream/main --worktree -- \
+  app/src/main/assets/rootfs.tzst \
+  app/src/main/assets/rootfs_patches.tzst \
+  app/src/main/assets/pulseaudio.tzst \
+  app/src/main/assets/container_pattern.tzst \
+  app/src/main/assets/wincomponents
 ```
 
-> ⚠️ 不要用 `git checkout upstream/main -- <路径>`：带 tree-ish 的 checkout 会写索引，把本应排除的大二进制纳入暂存。用 `git restore --worktree` 形式保持 `git status` 干净。
+> ⚠️ 不要用 `git checkout upstream/main -- <路径>`：带 tree-ish 的 checkout 会写索引，把本应排除的大二进制纳入暂存。用 `git restore --worktree` 形式保持 `git status` 干净；也不要对 `app/src/main/assets` / `app/src/main/jniLibs` 整目录 restore——其中已跟踪的 7 个二进制会被上游版本覆盖并弄脏工作树。
 
 #### 2. 配置 SDK 并构建
 
@@ -136,8 +144,8 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 
 ### 常见问题
 
-**Q：构建报错找不到 `librenpython.so` / `*.tzst`？**
-A：你还没补齐运行时资源。按上文「获取运行时资源」一节执行 `git restore --source=upstream/main --worktree -- app/src/main/assets app/src/main/jniLibs`。
+**Q：构建报错找不到 `rootfs.tzst` / `wincomponents` 等 Wine 侧运行时？**
+A：Wine 侧运行时不入库。按上文「克隆并补齐运行时资源」一节对缺失路径执行 `git restore --source=upstream/main --worktree -- <路径>`（box64 `.tzst` 与 `jniLibs` 的 5 个 `.so` 已随仓库分发，缺它们才需要整目录补齐）。
 
 **Q：`./gradlew` 下载 gradle-9.8.2-bin.zip 失败（PKIX 报错）？**
 A：代理/TLS 拦截导致。先检查 `~/.gradle/wrapper/dists/` 是否有完整版本，有则直接调用其二进制加 `--offline`；详见 README 原文与 [`ci/pre-push`](ci/pre-push)。

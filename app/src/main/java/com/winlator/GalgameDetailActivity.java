@@ -391,6 +391,8 @@ public class GalgameDetailActivity extends AppCompatActivity {
             return;
         }
         GalgameLibraryIndex.touchPlayedAsync(this, item.gameId);
+        // M10 自动备份调用点：启动成功即异步快照 S: 盘存档（失败静默，不打断启动）
+        GalgameSaveManager.autoBackupAsync(item.gameId);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 

@@ -1,0 +1,59 @@
+name: SCA (OWASP dependency-check)
+
+# 2026-11-05 整改（门禁 S2/S9「依赖漏洞持续扫描」）：接入 OWASP dependency-check。
+# 设计约束（与 ci.yml 头注同源）：
+#  - 本仓 CI 按设计无 Android SDK / Gradle 主构建，故 SCA 不进 PR 门禁，
+#    以「每周定时 + 手动触发」持续运行；High+ 漏洞时任务失败并留存报告 artifact；
+#  - 插件经 ci/sca-init.gradle 注入，主构建零改动；扫描输入 = 依赖锁定后的解析结果；
+#  - -PgalgameUiAbi=x86_64 复用 app/build.gradle 既有开关跳过 NDK/CMake 配置；
+#  - NVD_API_KEY 为可选 secret：无 key 时 NVD 匿名限速，首跑可能超时（重跑即可）。
+#  - zstd-jni 现钉 1.5.2-3（8db51b70 回退，兼容性约束）并在 dependabot.yml ignore：
+#    本扫描是其安全面持续跟踪的兜底，安全面评估记录见 gradle/libs.versions.toml 头注。
+
+on:
+  schedule:
+    # 每周日 03:00 UTC（错开 gitleaks 的 01:00 全量历史扫描）
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # dependency-check-gradle 版本升级维护：只改这一处（Portal 已发 13.0.0 大版本，
+  # 按本仓「不盲目跟新大版本」惯例钉 12.x 末版；与 ci/sca-init.gradle 默认值保持一致）
+  OWASP_DC_VERSION: '12.2.2'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-check:
+    name: OWASP dependency-check (gradle deps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: "Java 依赖面漏洞扫描（CVSS >= 7 失败）"
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          set -e
+          ./gradlew :app:dependencyCheckAnalyze -I ci/sca-init.gradle -PgalgameUiAbi=x86_64 --stacktrace
+
+      - name: Upload dependency-check report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-check-report
+          path: |
+            app/build/reports/dependency-check-report.html
+            app/build/reports/dependency-check-report.json
+          retention-days: 14

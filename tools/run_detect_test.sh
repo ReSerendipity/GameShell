@@ -7,6 +7,9 @@
 # 对应《测试_Flash报告》P1-1）扩展 GalgameLanguageDetector 回归。
 #
 # 用法： bash tools/run_detect_test.sh     （退出码非 0 表示有用例失败）
+#
+# M10 整改（2026-11-05）新增第四块：GalgameSaveManager 存档备份/恢复演练
+# （tools/save-drill，含自动备份标记与滚动清理断言，演练留痕见 docs/save-recovery-drill.md）。
 set -euo pipefail
 
 # 根路径由 git 推导，不写死用户主目录，换机器/换克隆位置依旧可跑
@@ -61,3 +64,22 @@ echo "== 分类 / ID / 图标编解码纯逻辑（FilterTest）=="
   "$SRC/IconCodec.java" \
   "$T/FilterTest.java"
 "$JAVA" -Dfile.encoding=UTF-8 -cp "$T/classes" FilterTest
+
+echo "== 存档备份/恢复演练（SaveBackupDrillTest，M10）=="
+D="$R/tools/save-drill"
+rm -rf "$D/src" "$D/classes"
+mkdir -p "$D/src/com/winlator/galgame" "$D/classes"
+
+# 始终从真实源码复制，保证测的是当前代码（不是快照）。
+# GalgameSaveManager 依赖 android.util.Log / com.winlator.core.{AppUtils,FileUtils,
+# WineRegistryEditor} / com.winlator.container.Container：取 CI 桩做类型与签名来源；
+# 唯一例外是 core/FileUtils —— CI 桩的 delete 是空操作，演练的滚动清理步骤需要一个
+# 真实递归删除，故用 tools/save-drill/stubs 下的同名同签名实现顶替（见其头注）。
+cp "$SRC/GalgameSaveManager.java" "$D/src/com/winlator/galgame/"
+"$JAVAC" -encoding UTF-8 -nowarn \
+  -d "$D/classes" \
+  $(find "$R/ci/stubs" -name '*.java' ! -path '*core/FileUtils.java') \
+  "$D/stubs/com/winlator/core/FileUtils.java" \
+  "$D/src/com/winlator/galgame/GalgameSaveManager.java" \
+  "$D/SaveBackupDrillTest.java"
+"$JAVA" -Dfile.encoding=UTF-8 -cp "$D/classes" com.winlator.galgame.SaveBackupDrillTest

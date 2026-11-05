@@ -12,6 +12,10 @@ import java.nio.file.Path;
  *  - 原有字节级路径不被破坏（根目录下带 magic 的 .rpa）
  *  - KiriKiri 优先级高于 Ren'Py（不得被 1b 段抢先）
  *  - 负例不误判（只有启动器 .exe / game/ 里没有 Ren'Py 内容）
+ *  - 引擎识别夹具（2026-11-05 整改 E22–E36）：全 18 引擎均有识别夹具
+ *    （RENPY/KIRIKIRI/UNITY/SIGLUS 原有 + 本批 TYRANO/ONSCRIPTER/RPGMAKER2K/
+ *    RPGMAKERRGSS/RPGMAKERMV/WOLFRPG/PSP/YURIS/ARTEMIS/CATSYSTEM2/ADVHD/
+ *    SYSTEMNNN/BGI/CMVS），UNKNOWN 负例 E11–E13 护航兜底路径
  */
 public class DetectTest {
 
@@ -71,7 +75,7 @@ public class DetectTest {
         root = Files.createTempDirectory("detect_test");
         System.out.println("temp root: " + root + "\n");
 
-        // 用例名一律 ASCII 稳定标识（E01…E14）：中文标签在 Windows 控制台会随代码页变成乱码，
+        // 用例名一律 ASCII 稳定标识（E01…E36）：中文标签在 Windows 控制台会随代码页变成乱码，
         // 一旦某条断言失败就认不出断了哪一条。中文语义说明保留在每条用例上方的注释里。
         // 1) 标准 Ren'Py 布局：根目录只有启动器 exe，脚本在 game/ 里（本次修复的目标）
         file("std_game/MyGame.exe", "MZ".getBytes());
@@ -156,6 +160,68 @@ public class DetectTest {
         // 18) 两层套娃逐层剥到真根
         emptyFile("w2/w2b/inner/UnityPlayer.dll");
         checkRoot("E21 unwrap-two-levels", "w2", "w2/w2b/inner");
+
+        // 19) 引擎识别夹具补全（2026-11-05 整改，M 评估「4/18 引擎」→ 全 18 引擎有夹具）。
+        //     以下每目录只放一个特征标记，结果由 detect() 的检查顺序唯一确定；
+        //     启发式引擎（RK-11）夹具只钉「当前指纹规则」，真实样本校准后随规则同步更新。
+        //     TyranoScript：根下有 tyrano/ 目录（Tyranor 布局）
+        emptyFile("tyrano_game/tyrano/index.html");
+        check("E22 tyrano-dir-marker", "tyrano_game", "TYRANO");
+
+        //     ONScripter：根下 nscript.dat（注意 .nsa 会被 Tyrano 分支抢先，故用 dat）
+        emptyFile("nscr_game/nscript.dat");
+        check("E23 onscripter-nscript-dat", "nscr_game", "ONSCRIPTER");
+
+        //     RPG Maker 2000/2003：RPG_RT.exe（EasyRPG 路线，忽略大小写）
+        emptyFile("rk2k_game/RPG_RT.exe");
+        check("E24 rpgmaker2k-rpg-rt-exe", "rk2k_game", "RPGMAKER2K");
+
+        //     RPG Maker XP/VX/VX Ace：.rgss3a 归档（JoiPlay 插件）
+        emptyFile("rgss_game/Game.rgss3a");
+        check("E25 rpgmakerrgss-rgss3a", "rgss_game", "RPGMAKERRGSS");
+
+        //     RPG Maker MV/MZ：www/ 内含 data/（JoiPlay 插件）
+        emptyFile("rpgmv_game/www/data/Actors.json");
+        check("E26 rpgmakermv-www-data", "rpgmv_game", "RPGMAKERMV");
+
+        //     Wolf RPG Editor：根下 .wolf 归档（Data/*.wolf 布局 detect() 不扫，
+        //     现行指纹只认根级 .wolf——夹具钉的是当前行为）
+        emptyFile("wolf_game/game.wolf");
+        check("E27 wolfrpg-wolf-archive", "wolf_game", "WOLFRPG");
+
+        //     PSP：PSP_GAME/ 解包目录与 .cso 压缩镜像两形态（PPSSPP 路线）
+        emptyFile("psp_game_dir/PSP_GAME/SYSDIR/EBOOT.BIN");
+        check("E28 psp-game-dir", "psp_game_dir", "PSP");
+        emptyFile("psp_cso_game/image.cso");
+        check("E29 psp-cso-image", "psp_cso_game", "PSP");
+
+        //     YU-RIS：.ypf 归档（.ypf 在 UNITY/BGI 等之前检查，单标记无歧义）
+        emptyFile("yuris_game/data.ypf");
+        check("E30 yuris-ypf-archive", "yuris_game", "YURIS");
+
+        //     Artemis：REALLIVE.exe（A 路由可执行名，RK-11 启发式）
+        emptyFile("artemis_game/REALLIVE.exe");
+        check("E31 artemis-reallive-exe", "artemis_game", "ARTEMIS");
+
+        //     CatSystem2：CatSystem2.exe（A 路由可执行名，RK-11 启发式）
+        emptyFile("cs2_game/CatSystem2.exe");
+        check("E32 catsystem2-exe", "cs2_game", "CATSYSTEM2");
+
+        //     AdvHD：可执行名含 advhd（あかべぇそふとつぅ 系）
+        emptyFile("advhd_game/AdvHD.exe");
+        check("E33 advhd-exe-name", "advhd_game", "ADVHD");
+
+        //     SystemNNN：nnnconfig* 前缀特征文件
+        emptyFile("nnn_game/nnnconfig.dat");
+        check("E34 systemnnn-nnnconfig", "nnn_game", "SYSTEMNNN");
+
+        //     BGI / Ethornell：bgi.exe（bgi_tsk.exe / bhvc.exe 同族）
+        emptyFile("bgi_game/BGI.exe");
+        check("E35 bgi-exe", "bgi_game", "BGI");
+
+        //     CMVS：cmvs.exe（cmvs32/64.exe 同族）
+        emptyFile("cmvs_game/CMVS.exe");
+        check("E36 cmvs-exe", "cmvs_game", "CMVS");
 
         System.out.println("\n==== " + pass + " passed, " + fail + " failed ====");
         if (fail > 0) System.exit(1);

@@ -43,6 +43,9 @@ Thumbs.db
 # renpy-testgame 的图片由 make_art.py 生成，均可重建，不入库。
 tools/detect-test/src/
 tools/detect-test/classes/
+# SaveBackupDrillTest（M10 演练夹具）同口径：运行时复制/编译产物不入库
+tools/save-drill/src/
+tools/save-drill/classes/
 tools/renpy-testgame/game/images/
 
 # --- 敏感信息防泄露（Git 版本控制安全工程与防泄露最佳实践指南 v1.1 第二章/第八章）---
@@ -86,3 +89,8 @@ AGENTS.md
 
 # 仅本地容器：内部说明、agent 上下文、实验记录、纯历史（§13.1）；docs/ 为纯入库目录
 /local/
+
+# release 签名参数（2026-11-05 整改：私钥/参数永不入库）
+/keystore.properties
+*.jks
+*.keystore

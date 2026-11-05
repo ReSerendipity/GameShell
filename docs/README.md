@@ -36,3 +36,4 @@ GameShell（galgame 安卓运行器，内嵌 Winlator 源组件）的 docs/ 全�
 | [fullscreen-fix-retrospective.md](fullscreen-fix-retrospective.md) | 全屏修复复盘（PR #36）：根因两层叠加与可复用判断 |
 | [real-device-verification.md](real-device-verification.md) | 真机验证报告（2026-10-22~24 三轮）：只写有证据的结论 |
 | [robustness-assessment-2026-10.md](robustness-assessment-2026-10.md) | 健壮性完整性评估（2026-10-26）：导入事故链、批量导入落地 |
+| [save-recovery-drill.md](save-recovery-drill.md) | 存档备份/恢复演练记录（M10 止血）：自动备份调用点 + 导出→清空→恢复→校验 JVM 实测 |

@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * B4 / P4 存档持久化（Plan Part V）。
@@ -52,6 +54,14 @@ public final class GalgameSaveManager {
     private boolean autoBackup = true;
 
     public GalgameSaveManager(String gameId) {
+        this(gameId, new File(SAVE_ROOT, gameId));
+    }
+
+    /**
+     * 测试缝隙（tools/save-drill 存档恢复演练用，M10）：S: 盘根可注入，
+     * 让纯 JVM 演练不触碰真实存档路径（真实构造器永远用 {@link #SAVE_ROOT}）。
+     */
+    GalgameSaveManager(String gameId, File saveDir) {
         if (gameId == null || gameId.trim().isEmpty()) {
             // 空 id 会让 S: 盘目录退化成 SAVE_ROOT 根：所有游戏共用一份存档，
             // 导出/恢复互相串档（2026-10-26 评估 TD-24）。宁可当场报错。
@@ -59,7 +69,7 @@ public final class GalgameSaveManager {
                     "gameId 不能为空：空的 gameId 会让存档目录退化成 S: 盘根，导致跨游戏串档");
         }
         this.gameId = gameId;
-        this.gameSaveDir = new File(SAVE_ROOT, gameId);
+        this.gameSaveDir = saveDir;
     }
 
     // ---- 基础 ----
@@ -182,11 +192,81 @@ public final class GalgameSaveManager {
         return new File(com.winlator.core.AppUtils.DIRECTORY_DOWNLOADS, "galgame-backup");
     }
 
+    // ---- 自动备份（M10 P0 止血，2026-11-05）----
+
+    /** 自动备份滚动保留份数（按 gameId 逐游戏清理，只清带 {@link #AUTO_BACKUP_MARKER} 的目录）。 */
+    static final int AUTO_BACKUP_KEEP = 5;
+
+    /** 自动备份目录内标记文件名（区分自动快照与用户手动导出，滚动清理只认带标记的）。 */
+    static final String AUTO_BACKUP_MARKER = ".autobackup";
+
+    /** 自动备份单线程执行器（串行，避免连续启动两局时对同一 S: 盘并发拷贝）。 */
+    private static final java.util.concurrent.ExecutorService AUTO_BACKUP_IO =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    /**
+     * 自动备份调用点（M10：此前 {@code autoBackup} 字段无任何调用点，备份只有用户
+     * 手动入口）。游戏启动成功后由启动入口调用，把 S: 盘当前存档快照到
+     * {@code Downloads/galgame-backup/<gameId>-<ts>/}。
+     *
+     * <ul>
+     *   <li><b>异步串行</b>：单线程执行器，绝不阻塞/打断启动路径；</li>
+     *   <li><b>恢复可见</b>：与手动导出同目录同名规范，恢复对话框无需改动即可列出自动快照；</li>
+     *   <li><b>可清理</b>：快照内写 {@value #AUTO_BACKUP_MARKER} 标记，滚动保留
+     *       {@value #AUTO_BACKUP_KEEP} 份，手动导出（无标记）永不被自动清理；</li>
+     *   <li><b>失败静默</b>：备份失败只记日志，游戏照常玩——备份是保险，不是门槛。</li>
+     * </ul>
+     */
+    public static void autoBackupAsync(final String gameId) {
+        if (gameId == null || gameId.trim().isEmpty()) return;
+        AUTO_BACKUP_IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                GalgameSaveManager m = new GalgameSaveManager(gameId);
+                if (!m.autoBackup) return;
+                boolean ok = m.exportBackup(defaultBackupDir(), true);
+                int pruned = ok ? pruneAutoBackups(defaultBackupDir(), gameId) : 0;
+                Log.i(TAG, "自动备份 gameId=" + gameId + " ok=" + ok + " pruned=" + pruned);
+            }
+        });
+    }
+
+    /** 滚动清理：只清带自动备份标记的本游戏快照，保留最新 {@value #AUTO_BACKUP_KEEP} 份。 */
+    static int pruneAutoBackups(File backupRoot, String gameId) {
+        File[] all = backupRoot.listFiles();
+        if (all == null) return 0;
+        String prefix = gameId + "-";
+        List<File> autos = new ArrayList<>();
+        for (File f : all) {
+            if (f.isDirectory() && f.getName().startsWith(prefix)
+                    && new File(f, AUTO_BACKUP_MARKER).isFile()) {
+                autos.add(f);
+            }
+        }
+        // 目录名以秒级时间戳结尾，字典序 = 时间序；倒序后前 KEEP 份保留
+        autos.sort((a, b) -> b.getName().compareTo(a.getName()));
+        int pruned = 0;
+        for (int i = AUTO_BACKUP_KEEP; i < autos.size(); i++) {
+            if (FileUtils.delete(autos.get(i))) pruned++;
+            else Log.w(TAG, "过期自动备份清理失败（保留现场）: " + autos.get(i));
+        }
+        return pruned;
+    }
+
     /**
      * 导出存档备份（AC-14）。落地为「目录复制」到 destDir/<gameId>-<ts>/。
      * 不抛异常，失败返回 false。（tar 需设备端二进制，留作后续增强。）
      */
     public boolean exportBackup(File destDir) {
+        return exportBackup(destDir, false);
+    }
+
+    /**
+     * 导出实现。auto=true（自动备份路径）时在快照内写 {@value #AUTO_BACKUP_MARKER}
+     * 标记，供滚动清理识别；手动导出（auto=false）不写标记、永不被自动清理。
+     * 包内可见：供 {@link #autoBackupAsync} 与 save-drill 演练夹具复用。
+     */
+    boolean exportBackup(File destDir, boolean auto) {
         if (!ensureSaveDir() || destDir == null) return false;
         if (!destDir.isDirectory() && !destDir.mkdirs()) return false;
 
@@ -194,6 +274,9 @@ public final class GalgameSaveManager {
         File target = new File(destDir, gameId + "-" + ts);
         try {
             copyDirectory(gameSaveDir, target);
+            if (auto && !new File(target, AUTO_BACKUP_MARKER).createNewFile()) {
+                Log.w(TAG, "自动备份标记写入失败（不影响快照可用性）: " + target);
+            }
             return true;
         }
         catch (IOException e) {

@@ -8,6 +8,20 @@ material = "1.14.0"
 # 1.5.6/1.5.7 的 Android AAR loader 会把库名拼成 liblibzstd-jni-*.so；1.5.7-13+ 还要求 compileSdk 37。
 # 1.5.7-24 与当前 compileSdk 35 / AGP 8.6.1 不兼容（AAR metadata 要求 37+），故回退到
 # 1.5.2-3 —— 旧 APK 真机验证可用的最后版本，A 路线 rootfs/容器解压仍走它。
+#
+# 安全面评估（2026-11-05 整改补记，与 .github/workflows/sca.yml 持续扫描互证）：
+# - GHSA-9jx2-gfp9-phfm / CVE-2026-89045（ZstdInputStreamNoFinalizer.read() 负长度
+#   死循环 DoS，影响 1.4.8-4 ~ 1.5.7-13，修复于 1.5.7-14）：1.5.2-3 **按版本区间在列**。
+#   可达性实测：全仓唯一 zstd 引用点 = core/TarCompressorUtils（经 commons-compress
+#   1.28.0 的 ZstdCompressorInputStream/OutputStream 流包装，javap 字节码证实其实例化
+#   的是带 finalizer 的 ZstdInputStream，非受击类 NoFinalizer）；且触发前提是
+#   read(buf,off,len) 收到负 len，本仓调用链长度恒为固定正 buffer → 现有路径不可达。
+# - GHSA-947w-pxjj-c7m9（字典 use-after-free，≤1.5.7-13）：全仓无任何 zstd 字典 API
+#   调用（grep 实证唯一引用点只 import commons-compress 流包装）→ 不可达。
+# - CVE-2022-4899（zstd 1.4.10 CLI 空参数越界）：嵌入 zstd 1.5.2 不在影响面。
+# - 处置：修复线 1.5.7-14+ 仍被上面的构建兼容性约束阻断（AAR loader 要求 compileSdk 37），
+#   作为**知情敞口**保留：dependabot ignore 维持、SCA（sca.yml）周期扫描持续跟踪，
+#   AGP/compileSdk 升级批次必须同批解禁重评。
 zstdJni = "1.5.2-3"
 xz = "1.12"
 # v2.9 评估整改（供应链报告 P1-4）：1.20 -> 1.26.0，脱离 CVE-2021-36090（修复于 1.21）

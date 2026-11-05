@@ -1,0 +1,44 @@
+// SCA 专用 init 脚本（2026-11-05 整改，门禁 S2/S9「依赖漏洞持续扫描」）。
+//
+// 作用：把 OWASP dependency-check Gradle 插件注入本仓构建，**主构建零改动**——
+// 正常的 ./gradlew 构建完全不加载本文件（只有显式 -I ci/sca-init.gradle 时生效），
+// 因此不增加所有开发构建的 classpath 负担，也不触碰 buildscript / 版本目录。
+//
+// 用法（与 .github/workflows/sca.yml 一致，本地复跑同命令）：
+//   ./gradlew :app:dependencyCheckAnalyze -I ci/sca-init.gradle -PgalgameUiAbi=x86_64
+//
+// -PgalgameUiAbi=x86_64：复用 app/build.gradle 既有开关跳过 externalNativeBuild 配置，
+// SCA 只解析 Java 依赖面，不需要 NDK/CMake。
+//
+// 扫描输入的确定性：app 依赖已锁（gradle.lockfile，dependencyLocking lockAllConfigurations），
+// 插件解析到的坐标与 lockfile 一致，扫描结果可复现。
+
+initscript {
+    repositories {
+        // dependency-check-gradle 12.x 起只发布在 Gradle Plugin Portal，不再发 Maven Central
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        // 版本单一来源 = .github/workflows/sca.yml 的 OWASP_DC_VERSION env（本默认值与之一致）
+        classpath "org.owasp:dependency-check-gradle:${System.getenv('OWASP_DC_VERSION') ?: '12.2.2'}"
+    }
+}
+
+// 插件类经 initscript classloader 显式取用：init 脚本体内裸写 org.owasp.…
+// 会被 Groovy 当项目属性解析（实测报 "Could not get unknown property 'org'"）。
+def dcPlugin = Class.forName('org.owasp.dependencycheck.gradle.DependencyCheckPlugin', true, this.class.classLoader)
+
+allprojects {
+    apply plugin: dcPlugin
+
+    dependencyCheck {
+        // CVSS >= 7（High 及以上）任务失败。修复时限承诺见 SECURITY.md（高危 30 天）。
+        failBuildOnCVSS = 7
+        formats = ['HTML', 'JSON']
+        nvd {
+            // 可选 secret：无 key 时 NVD 匿名限速，首跑慢或超时属正常（重跑即可）
+            apiKey = System.getenv('NVD_API_KEY') ?: ''
+        }
+        // 已知误报在跑出首轮报告后按官方 suppressionFile 机制补录（先保持零豁免）。
+    }
+}
