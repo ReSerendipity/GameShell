@@ -146,6 +146,9 @@ public final class R {
         public static final int rowLanguage = 128;
         public static final int rowShortcuts = 129;
         public static final int rowTheme = 130;
+        // TD-11：版本号显示改为运行时取值后新增的两个 id
+        public static final int TVBrandMeta = 131;
+        public static final int TVVersion = 132;
     }
     public static final class layout {
         public static final int activity_galgame_batch_import = 1;
@@ -181,6 +184,8 @@ public final class R {
         public static final int galgame_action_launch = 11;
         public static final int galgame_action_logs = 12;
         public static final int galgame_action_switch_engine = 13;
+        // TD-11：报头版本号也改为运行时填占位符（%1$s）
+        public static final int galgame_brand_meta = 900;
         public static final int galgame_advanced_collapse = 14;
         public static final int galgame_advanced_expand = 15;
         public static final int galgame_apply = 16;

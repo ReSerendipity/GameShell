@@ -33,6 +33,10 @@ public class GalgameSettingsActivity extends AppCompatActivity {
 
         findViewById(R.id.BTBack).setOnClickListener(v -> finish());
 
+        // TD-11：版本号唯一来源是已安装包的 versionName，layout 里不再写死
+        ((TextView) findViewById(R.id.TVVersion))
+                .setText(com.winlator.galgame.GalgameVersion.versionName(this));
+
         // 主题
         boolean dark = prefs.getInt("app_theme", GalgameSettingsFragment.APP_THEME_LIGHT) == GalgameSettingsFragment.APP_THEME_DARK;
         TextView themeValue = findViewById(R.id.TVTheme);
@@ -124,7 +128,8 @@ public class GalgameSettingsActivity extends AppCompatActivity {
         findViewById(R.id.rowAbout).setOnClickListener(v ->
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.galgame_about)
-                        .setMessage(getString(R.string.galgame_about_version) + "\n\n"
+                        .setMessage(getString(R.string.galgame_about_version,
+                                        com.winlator.galgame.GalgameVersion.versionName(this)) + "\n\n"
                                 + getString(R.string.galgame_about_message)
                                 + "\n\n社交平台\n"
                                 + "GitHub  https://github.com/ReSerendipity\n"

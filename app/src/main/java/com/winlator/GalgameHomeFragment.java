@@ -104,6 +104,10 @@ public class GalgameHomeFragment extends Fragment {
 
         view.findViewById(R.id.BTSettings).setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), GalgameSettingsActivity.class)));
+        // TD-11：报头版本号不再写死在 strings / layout，统一取已安装包的 versionName
+        ((TextView) view.findViewById(R.id.TVBrandMeta))
+                .setText(getString(R.string.galgame_brand_meta,
+                        com.winlator.galgame.GalgameVersion.versionName(requireContext())));
         view.findViewById(R.id.FABImport).setOnClickListener(v -> openImport());
         view.findViewById(R.id.BTImportEmpty).setOnClickListener(v -> openImport());
 

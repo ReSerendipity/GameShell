@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Swiss 游戏库（横屏）：紧凑报头（标题 + 搜索同行），密网格 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/swiss_paper">
@@ -25,11 +26,12 @@
                 android:gravity="center_vertical">
 
                 <TextView
+                    android:id="@+id/TVBrandMeta"
                     style="@style/SwissLabel"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/galgame_brand_meta" />
+                    tools:text="GameShell / 版本号" />
 
                 <ImageButton
                     android:id="@+id/BTSettings"
