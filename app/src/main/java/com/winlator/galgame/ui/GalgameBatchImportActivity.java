@@ -293,6 +293,7 @@ public class GalgameBatchImportActivity extends AppCompatActivity {
     private void stageIntoContainer(Row row, Container container, ImportFlow.ImportResult result,
                                     File stagedDir, String title, List<Row> queue, int index) {
         try {
+            result.title = title;   // TD-25：overlay 里冗余存一份显示名，索引失效时可回落
             ImportFlow.stageGameFiles(container, result, stagedDir, getApplicationContext(), null);
             GalgameSaveManager saveManager = new GalgameSaveManager(result.gameId);
             saveManager.redirectShellFolders(container);

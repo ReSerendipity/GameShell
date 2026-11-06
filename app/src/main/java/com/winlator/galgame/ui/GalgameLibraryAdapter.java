@@ -96,7 +96,8 @@ public final class GalgameLibraryAdapter extends BaseAdapter {
     /**
      * @param title 索引里记的显示名（导入时用户确认的名字）。容器名里只有 ASCII gameId，
      *              直接拿它当标题就是一串下划线（2026-10-26 真机：卡片标题全成
-     *              {@code ____H____} 而不显示 CJK 原名）。null/空则回退 gameId。
+     *              {@code ____H____} 而不显示 CJK 原名）。
+     *              索引缺名时按 TD-25 回落容器内 overlay 的 title，最后才退 gameId。
      */
     public static Item fromContainer(Container container, String preferredEngine, String title) {
         String name = container != null ? container.getName() : null;
@@ -108,7 +109,9 @@ public final class GalgameLibraryAdapter extends BaseAdapter {
         File exe = overlayExe(container);
         String engine = (container == null) ? null
                 : container.getExtra("galgame_engine", null);
-        String label = (title != null && !title.trim().isEmpty()) ? title.trim() : gameId;
+        String label = (title != null && !title.trim().isEmpty()) ? title.trim() : null;
+        if (label == null) label = com.winlator.galgame.GalgameLaunchHelper.readOverlayTitle(container);
+        if (label == null) label = gameId;
         return new Item(container, gameId, label, displayOf(engine),
                 gameDir, exe, engine, preferredEngine);
     }

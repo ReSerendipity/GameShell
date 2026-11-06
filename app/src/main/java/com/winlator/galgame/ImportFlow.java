@@ -549,6 +549,12 @@ public final class ImportFlow {
             o.put("encrypted", result.encrypted);
             o.put("language", result.language != null ? result.language : "");
             o.put("game_dir", gameDir.getAbsolutePath());
+            // TD-25：显示标题除索引外再冗余一份到容器内。索引（SharedPreferences）损坏或被清后
+            // 容器卡只剩 ASCII gameId（真机实测 `____H____-6b0d`），overlay 随容器目录一起活，
+            // 是这条链上唯一能自证名字的落点。标题由 UI 在导入确认时给，故只在非空时写。
+            if (result.title != null && !result.title.trim().isEmpty()) {
+                o.put("title", result.title.trim());
+            }
             if (result.saveDir != null) o.put("save_dir", result.saveDir.getAbsolutePath());
             if (result.gameExe != null) o.put("exe", result.gameExe.getAbsolutePath());
             if (!result.encryptionMarkers.isEmpty()) {
@@ -581,6 +587,8 @@ public final class ImportFlow {
         public EngineDetector.Route route;
         public String language;         // 检测到的 locale（zh_CN.UTF-8 / ja_JP.UTF-8），run 阶段填
         public String gameId;
+        /** 显示名（用户在导入确认页确认的标题）。UI 在 stageGameFiles 之前赋值，写入 overlay 供索引失效时回落。 */
+        public String title;
         public boolean encrypted;
         public List<String> encryptionMarkers = Collections.emptyList();
         public String nativePlayer;     // B 路由：原生播放器包名/标识

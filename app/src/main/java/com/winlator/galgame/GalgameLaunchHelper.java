@@ -87,6 +87,19 @@ public final class GalgameLaunchHelper {
     }
 
     /**
+     * 读取容器根目录 {@code galgame_overlay.json} 的 title 字段（导入时用户确认的显示名）。
+     *
+     * <p>TD-25：显示名原先只存在 {@code GalgameLibraryIndex}，索引损坏/被清后卡片标题退化成
+     * ASCII gameId（真机实测 {@code ____H____-6b0d}）。overlay 与容器同生共死，故索引缺名时
+     * 用它回落。老容器没有该字段 → 返回 null，行为与改动前一致。
+     */
+    public static String readOverlayTitle(Container container) {
+        if (container == null) return null;
+        String title = readOverlayField(container, "title");
+        return (title != null && !title.trim().isEmpty()) ? title.trim() : null;
+    }
+
+    /**
      * 游戏退出（进程结束 / 菜单「退出」）后重启应用并**直接落回游戏库**。
      *
      * 背景（2026-09-25 用户反馈）：上游 exit() 走 {@code AppUtils.restartApplication}，

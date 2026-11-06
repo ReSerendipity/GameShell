@@ -30,7 +30,7 @@
 | TD-22 | 2026-10-26 | 点卡片在主线程同步跑 `GameLauncher.decide → detectDeep`（深度 3、预算 4000 目录项 + 逐文件读魔数） | 大游戏目录卡顿/ANR | 已登记，待偿还（评估 §4） |
 | TD-23 | 2026-10-26 | `GalgameLanguageDetector` 弱信号「文件夹名含任意汉字 → zh_CN」：日文标题几乎必含汉字 → LCID 936、Shift-JIS 文本乱码；`GalgameLocaleInjector.reapply` 还会用同一误判纠正正确值 | 日文游戏被当中文跑 | 已登记，待偿还（评估 §4） |
 | TD-24 | 2026-10-26 | `GalgameSaveManager` 的 gameId 无校验：空串时存档目录指向 SAVE_ROOT 根（跨游戏串档）；`symlinkPortableSaves` 先 `FileUtils.delete(dir)` 再 symlink，symlink 失败即存档目录消失 | 导出/恢复串档；存档丢失 | **已偿还（2026-10-26）**：构造函数拒绝空 gameId（抛 IllegalArgumentException），详情页缺 gameId 直接退回列表；移档顺序改为「合并不完整就跳过链接 → 源目录删不掉就跳过 → symlink 后校验，未链上则把档拷回 → 同名不同内容留 `.bak-<ts>`」。未在真机诱导 symlink 失败（容器内该目录形态不常出现），以代码复核为准 |
-| TD-25 | 2026-10-26 | 显示标题只存在索引里；索引损坏/丢失后容器卡标题退化成 ASCII gameId（`______________H________-6b0d`），真机复验时实测 | 用户可见的名字丢失，只能靠用户记得原名重命名 | 已登记，待偿还：把 title 冗余进容器内 `galgame_overlay.json`，索引缺 title 时回落读取（导入时已写 overlay，加一个字段即可） |
+| TD-25 | 2026-10-26 | 显示标题只存在索引里；索引损坏/丢失后容器卡标题退化成 ASCII gameId（`______________H________-6b0d`），真机复验时实测 | 用户可见的名字丢失，只能靠用户记得原名重命名 | **已偿还（2026-11-06）**：`ImportFlow.writeOverlay` 在写 `galgame_overlay.json` 时加 `title` 字段（导入确认页的名字在 A/B 两路由的 UI 里赋值给 `ImportResult.title`，非空才写）；`GalgameLaunchHelper.readOverlayTitle` 读回该字段；解析顺序改为「索引 title → overlay title → gameId」，`GalgameLibraryAdapter.fromContainer` 与容器页卡片（`ContainersFragment`）都用这一条链。老容器无该字段时行为与改动前完全一致。验证：CI 同口径 `javac` 类型门禁三步全 rc=0（桩 / galgame 全树 / 7 个热点入口）；另跑 9 项 JVM 行为探针 9/9 PASS（含反射调用 `writeOverlay` 验证写端去空白），改回旧 adapter 后同一探针第 ⑤ 项按真机形态判红（`____H____-6b0d`）。未做真机复验（设备 `dc57ebe3` 仍 unauthorized） |
 
 > **积压取舍（2026-10-24）**：TD-01 / TD-03 / TD-04 / TD-05 / TD-06 / TD-10 判定为**可事后解决**，
 > 保留为待办积压，不阻塞发布；TD-02 因无对应设备**永久跳过**（见上，不再提及）。

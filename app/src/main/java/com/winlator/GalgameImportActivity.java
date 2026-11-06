@@ -443,6 +443,8 @@ public class GalgameImportActivity extends AppCompatActivity {
                 main.post(() -> fail(getString(R.string.galgame_import_failed) + ": " + e.getMessage()));
                 return;
             }
+            // TD-25：把确认过的显示名带进结果，A 路由 stageGameFiles 时会写进容器内 overlay
+            result.title = title;
             if (result.route == EngineDetector.Route.B) {
                 // GameShell 第七轮：原生引擎游戏先「收纳」进应用私有目录
                 // （files/galgame-native/<gameId>，完整复制）——不再引用源目录，

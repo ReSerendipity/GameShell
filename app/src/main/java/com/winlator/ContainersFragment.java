@@ -132,7 +132,12 @@ public class ContainersFragment extends Fragment {
         public void onBindViewHolder(final ViewHolder holder, int position) {
             final Container item = data.get(position);
             holder.imageView.setImageResource(R.drawable.icon_container);
-            holder.title.setText(item.getName());
+            // TD-25：容器名恒为 galgame-<ASCII gameId>，galgame 容器若在 overlay 里存了显示名，
+            // 用它当卡片标题（索引损坏/被清后仍显示原名）；非 galgame 容器保持原名不变。
+            String overlayTitle = (item.getName() != null
+                    && item.getName().startsWith(com.winlator.galgame.ImportFlow.GALGAME_CONTAINER_PREFIX))
+                    ? com.winlator.galgame.GalgameLaunchHelper.readOverlayTitle(item) : null;
+            holder.title.setText(overlayTitle != null ? overlayTitle : item.getName());
 
             // GameShell：副标题显示图形驱动 + 分辨率，让卡片信息更完整（消除简陋感）
             String driver = item.getGraphicsDriver();
