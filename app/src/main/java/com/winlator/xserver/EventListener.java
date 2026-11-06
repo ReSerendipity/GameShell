@@ -27,7 +27,9 @@ public class EventListener {
             event.send(client.getSequenceNumber(), client.getOutputStream());
         }
         catch (IOException e) {
-            e.printStackTrace();
+            // TD-10：事件发送路径原先各自 catch 后吞掉异常，绕过了 XConnectorEpoll 里
+            // 「IOException → killConnection」的既有策略；服务端会在半坏连接上继续发事件。
+            client.killOnWriteFailure(e);
         }
     }
 }

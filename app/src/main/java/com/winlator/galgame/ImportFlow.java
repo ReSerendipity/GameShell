@@ -168,6 +168,8 @@ public final class ImportFlow {
             long totalBytes = countBytes(sourceFolder);
             long[] state = {0, System.currentTimeMillis()}; // done, lastTick
             copyDirectory(sourceFolder, gameDir, totalBytes, state, progress);
+            // TD-19：拷贝完必须自证「源是什么样、目标就是什么样」，否则半拷贝会被当成品
+            verifyCopyComplete(sourceFolder, gameDir, "游戏文件");
             if (progress != null) progress.onProgress(totalBytes, totalBytes);
         } catch (IOException e) {
             throw new IllegalStateException("复制游戏文件失败: " + e.getMessage(), e);
@@ -393,14 +395,58 @@ public final class ImportFlow {
 
     /** 递归统计目录字节总量（只读目录项与文件长度，不读内容）。 */
     private static long countBytes(File dir) {
+        return countTree(dir)[1];
+    }
+
+    /**
+     * 递归统计目录的 {文件数, 字节数}。
+     *
+     * <p>TD-19：只比字节不够——0 字节占位文件被漏拷时字节数不变；文件数/字节数一起比，
+     * 半拷贝（磁盘满、进程被杀、权限中途被收）才跑不掉。
+     *
+     * <p>目录不可读时返回 {-1, -1} 而不是 {0, 0}：0 会被误当成「源本来就是空的」，
+     * 从而把「读不到」当成「拷贝完成」。
+     */
+    static long[] countTree(File dir) {
         File[] files = dir.listFiles();
-        if (files == null) return 0;
-        long sum = 0;
+        if (files == null) return new long[] {-1, -1};
+        long count = 0;
+        long bytes = 0;
         for (File f : files) {
-            if (f.isDirectory()) sum += countBytes(f);
-            else sum += Math.max(0, f.length());
+            if (f.isDirectory()) {
+                long[] sub = countTree(f);
+                if (sub[0] < 0) return new long[] {-1, -1};
+                count += sub[0];
+                bytes += sub[1];
+            }
+            else {
+                count += 1;
+                bytes += Math.max(0, f.length());
+            }
         }
-        return sum;
+        return new long[] {count, bytes};
+    }
+
+    /**
+     * 拷贝完成后的完整性校验（TD-19）。
+     *
+     * <p>此前 `copyDirectory` 遇到 `listFiles()==null` 直接 return，等于「一个文件都没拷
+     * 也算成功」；调用方拿到 gameDir 就继续找 exe，于是出现「库里有卡片、点开报缺文件、
+     * 目录里却少了一半」的形态。
+     */
+    static void verifyCopyComplete(File src, File dst, String what) throws IOException {
+        long[] from = countTree(src);
+        long[] to = countTree(dst);
+        if (from[0] < 0) {
+            throw new IOException(what + "源目录不可读（权限被收或目录已被删除）: " + src);
+        }
+        if (to[0] < 0) {
+            throw new IOException(what + "目标目录不可读: " + dst);
+        }
+        if (from[0] != to[0] || from[1] != to[1]) {
+            throw new IOException(what + "复制不完整：源 " + from[0] + " 个文件/" + from[1]
+                    + " 字节，目标 " + to[0] + " 个文件/" + to[1] + " 字节");
+        }
     }
 
     private static void copyDirectory(File src, File dst) throws IOException {
@@ -411,7 +457,8 @@ public final class ImportFlow {
                                       ProgressListener progress) throws IOException {
         if (!dst.exists() && !dst.mkdirs()) throw new IOException("无法创建 " + dst);
         File[] files = src.listFiles();
-        if (files == null) return;
+        // TD-19：之前这里 `return`，把「读不到目录」当成「空目录=拷贝成功」。
+        if (files == null) throw new IOException("无法列出目录内容（权限被收或目录已删）: " + src);
         for (File f : files) {
             File t = new File(dst, f.getName());
             if (f.isDirectory()) copyDirectory(f, t, total, state, progress);

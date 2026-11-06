@@ -27,6 +27,19 @@ public final class GalgameNativeStore {
 
     private static final String STORE_DIR = "galgame-native";
 
+    /**
+     * 收纳完成标记（TD-19）。
+     *
+     * <p>此前 `store()` 的判断是「目标目录非空即已收纳、直接返回」——磁盘满、进程被杀、
+     * 权限中途被收留下的<b>半拷贝</b>于是被当成成品，库里卡片能点、进去缺文件。
+     * 现在拷贝成功后写这个标记（文件数 + 字节数），再次调用时把标记与实际树对比，
+     * 对不上就整棵删掉重拷。
+     *
+     * <p>为什么整棵重拷而不是续拷：续拷要逐文件比对内容/长度才能保证一致，成本与复杂度
+     * 都高于「删掉再来一次」，而重复导入同一游戏本来就是低频路径。
+     */
+    private static final String COMPLETE_MARKER = ".galgame-store.complete";
+
     private GalgameNativeStore() {}
 
     /** 收纳库根（应用私有）。 */
@@ -49,8 +62,12 @@ public final class GalgameNativeStore {
     public static File store(Context context, String gameId, File sourceDir,
                              ImportFlow.ProgressListener progress) throws IOException {
         File target = gameDir(context, gameId);
-        if (target.isDirectory() && target.list() != null && target.list().length > 0) {
+        if (isComplete(target)) {
             return target;
+        }
+        if (target.isDirectory() && target.list() != null && target.list().length > 0) {
+            // 半拷贝（或无标记的旧收纳）：删掉重来，不能拿它当成品
+            com.winlator.core.FileUtils.delete(target);
         }
         if (sourceDir == null || !sourceDir.isDirectory()) {
             throw new IOException("源目录不存在: " + sourceDir);
@@ -61,8 +78,49 @@ public final class GalgameNativeStore {
         long total = countBytes(sourceDir);
         long[] state = {0, System.currentTimeMillis()};
         copyDir(sourceDir, target, total, state, progress);
+        // TD-19：拷完先自证完整性（源/目标的文件数与字节数必须一致），再写完成标记
+        ImportFlow.verifyCopyComplete(sourceDir, target, "收纳");
+        writeMarker(target);
         if (progress != null) progress.onProgress(total, total);
         return target;
+    }
+
+    /**
+     * 收纳目录是否「完整可用」：目录存在 + 有完成标记 + 标记与实际树一致。
+     *
+     * <p>没有标记的旧收纳一律视为不完整：宁可重拷一次，也不把可能缺文件的老目录继续用。
+     */
+    public static boolean isComplete(File target) {
+        if (target == null || !target.isDirectory()) return false;
+        File marker = new File(target, COMPLETE_MARKER);
+        if (!marker.isFile()) return false;
+        String text;
+        try {
+            text = com.winlator.core.FileUtils.readString(marker);   // 单行 "文件数 字节数"
+        } catch (Exception e) {
+            return false;
+        }
+        if (text == null) return false;
+        String[] parts = text.trim().split("\\s+");
+        if (parts.length < 2) return false;
+        long[] actual = ImportFlow.countTree(target);
+        if (actual[0] < 0) return false;
+        // 标记文件本身要计入实际树，比对时排除
+        actual = new long[] {actual[0] - 1, actual[1] - marker.length()};
+        try {
+            return Long.parseLong(parts[0]) == actual[0] && Long.parseLong(parts[1]) == actual[1];
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static void writeMarker(File target) throws IOException {
+        long[] stats = ImportFlow.countTree(target);
+        if (stats[0] < 0) throw new IOException("收纳目录不可读: " + target);
+        File marker = new File(target, COMPLETE_MARKER);
+        try (FileOutputStream out = new FileOutputStream(marker)) {
+            out.write((stats[0] + " " + stats[1] + "\n").getBytes("UTF-8"));
+        }
     }
 
     public static boolean isStored(Context context, String gameId) {

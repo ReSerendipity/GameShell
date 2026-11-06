@@ -255,19 +255,22 @@ public class GalgameLibraryActivity extends AppCompatActivity {
 
         snack(getString(R.string.galgame_launching, item.label));
 
-        GameLauncher.Result result = GameLauncher.launch(
-                this, item.gameDir, item.container, item.engineName, item.preferredEngine);
+        // TD-22：裁决（含 detectDeep 逐文件读魔数）挪到后台线程，结果回主线程再切界面
+        GameLauncher.launchAsync(
+                this, item.gameDir, item.container, item.engineName, item.preferredEngine,
+                result -> {
+                    if (!result.launched) {
+                        snackLong(result.message != null ? result.message
+                                : getString(R.string.galgame_import_failed));
+                        return;
+                    }
 
-        if (!result.launched) {
-            snackLong(result.message != null ? result.message : getString(R.string.galgame_import_failed));
-            return;
-        }
-
-        GalgameLibraryIndex.touchPlayedAsync(getApplicationContext(), item.gameId);
-        // M10 自动备份调用点：启动成功即异步快照 S: 盘存档（失败静默，不打断启动）
-        GalgameSaveManager.autoBackupAsync(item.gameId);
-        // 界面切换过渡（淡入淡出，配合主题 windowAnimationStyle）
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    GalgameLibraryIndex.touchPlayedAsync(getApplicationContext(), item.gameId);
+                    // M10 自动备份调用点：启动成功即异步快照 S: 盘存档（失败静默，不打断启动）
+                    GalgameSaveManager.autoBackupAsync(item.gameId);
+                    // 界面切换过渡（淡入淡出，配合主题 windowAnimationStyle）
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                });
     }
 
     // ---- 诊断 / 日志 / 存档 ----

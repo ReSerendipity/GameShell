@@ -23,6 +23,8 @@ public class XClient extends ConnectedClient implements XResourceManager.OnResou
     private final ArrayMap<Window, EventListener> eventListeners = new ArrayMap<>();
     private final ArrayList<XResource> resources = new ArrayList<>();
     private final ArrayList<Callback<XClient>> onDestroyListeners = new ArrayList<>();
+    /** 事件写入是否已经失败过（TD-10：一次失败只处理一次，避免刷栈） */
+    private volatile boolean ioBroken = false;
 
     public XClient(long nativePtr, int fd, XServer xServer) {
         super(nativePtr, fd);
@@ -55,8 +57,22 @@ public class XClient extends ConnectedClient implements XResourceManager.OnResou
             event.send(sequenceNumber, outputStream);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            // TD-10：此前只 printStackTrace —— 事件写不出去说明连接已死或写超时，
+            // X11 协议流已经错位（后续事件会继续堆在同一个坏流上），必须踢掉连接。
+            killOnWriteFailure(e);
         }
+    }
+
+    /**
+     * 写入失败后的收尾（TD-10）。
+     *
+     * <p>用一次性标志挡住重复动作：一次启动里可能同时有几十条事件在写同一个坏 fd，
+     * 每次都去 kill/打印会把日志刷爆，也没有意义（第一次失败已经足够判定连接不可用）。
+     */
+    void killOnWriteFailure(IOException cause) {
+        if (ioBroken) return;
+        ioBroken = true;
+        xServer.killBrokenConnection(this, cause);
     }
 
     public boolean isInterestedIn(int eventId, Window window) {

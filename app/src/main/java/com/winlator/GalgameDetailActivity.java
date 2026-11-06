@@ -54,6 +54,8 @@ public class GalgameDetailActivity extends AppCompatActivity {
     private Container container;
     private GalgameLibraryAdapter.Item item;
     private boolean advancedOpen;
+    /** TD-22：启动裁决已挪到后台，连点卡片会重复发起启动，用这个标志挡住 */
+    private boolean launchInFlight;
     private LinearLayout advancedView;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -348,9 +350,13 @@ public class GalgameDetailActivity extends AppCompatActivity {
                     executor.execute(() -> {
                         try {
                             ImportFlow.stageGameFiles(created, result, src, appCtx);
+                            // TD-18：成功必须登记「已容器化」，否则同一游戏在库里同时留下
+                            // 容器卡与原生卡两张（走的是同一个 gameId，但卡片按 tier 各渲染一次）
+                            GalgameLibraryIndex.markContainerized(appCtx, item.gameId, item.label,
+                                    result.engine != null ? result.engine.name() : null);
                             // 让路由直接落到容器引擎：resolveOverride 会把它的 id 还原成
                             // UNKNOWN → GameEngineRegistry.resolve → WinlatorContainerEngine
-                            GalgameLibraryIndex.setPreferredEngine(this, item.gameId, "winlator-container");
+                            GalgameLibraryIndex.setPreferredEngine(appCtx, item.gameId, "winlator-container");
                             runOnUiThread(() -> {
                                 toast(getString(R.string.galgame_force_container_done));
                                 recreate();
@@ -358,7 +364,9 @@ public class GalgameDetailActivity extends AppCompatActivity {
                         }
                         catch (Exception e) {
                             Log.e("GalgameDetail", "forceContainer stage failed", e);
-                            runOnUiThread(() -> toast(getString(R.string.galgame_force_container_failed)));
+                            // TD-18：staging 失败就地回滚——容器已经建在磁盘上了，
+                            // 不删就是一个永远跑不起来的孤儿容器（占空间且出现在容器列表里）
+                            rollbackContainer(created);
                         }
                     });
                 }));
@@ -368,6 +376,16 @@ public class GalgameDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> toast(getString(R.string.galgame_force_container_failed)));
             }
         });
+    }
+
+    /** TD-18：回滚「改用容器」途中新建的容器，回滚完再提示失败（顺序反了用户会以为已成功）。 */
+    private void rollbackContainer(final Container orphan) {
+        if (orphan == null) {
+            runOnUiThread(() -> toast(getString(R.string.galgame_force_container_failed)));
+            return;
+        }
+        new ContainerManager(getApplicationContext()).removeContainerAsync(orphan,
+                () -> runOnUiThread(() -> toast(getString(R.string.galgame_force_container_failed))));
     }
 
     private void toggleAdvanced() {
@@ -384,16 +402,22 @@ public class GalgameDetailActivity extends AppCompatActivity {
             toast(getString(R.string.galgame_source_missing));
             return;
         }
-        GameLauncher.Result result = GameLauncher.launch(this, item.gameDir, item.container,
-                item.engineName, item.preferredEngine);
-        if (!result.launched) {
-            toast(result.message != null ? result.message : getString(R.string.galgame_import_failed));
-            return;
-        }
-        GalgameLibraryIndex.touchPlayedAsync(this, item.gameId);
-        // M10 自动备份调用点：启动成功即异步快照 S: 盘存档（失败静默，不打断启动）
-        GalgameSaveManager.autoBackupAsync(item.gameId);
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        if (launchInFlight) return;   // TD-22：裁决在后台，连点会起两次启动
+        launchInFlight = true;
+        // TD-22：detectDeep 逐文件读魔数，不能放在点击回调（主线程）里同步跑
+        GameLauncher.launchAsync(this, item.gameDir, item.container,
+                item.engineName, item.preferredEngine, result -> {
+                    launchInFlight = false;
+                    if (!result.launched) {
+                        toast(result.message != null ? result.message
+                                : getString(R.string.galgame_import_failed));
+                        return;
+                    }
+                    GalgameLibraryIndex.touchPlayedAsync(this, item.gameId);
+                    // M10 自动备份调用点：启动成功即异步快照 S: 盘存档（失败静默，不打断启动）
+                    GalgameSaveManager.autoBackupAsync(item.gameId);
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                });
     }
 
     private void showEnginePicker() {

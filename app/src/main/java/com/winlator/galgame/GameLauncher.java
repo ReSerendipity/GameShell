@@ -1,6 +1,8 @@
 package com.winlator.galgame;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.winlator.container.Container;
@@ -11,6 +13,8 @@ import com.winlator.galgame.engine.GameLaunchRequest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 游戏启动的<b>统一入口</b>：把「这局到底该用什么引擎跑」的裁决从 UI 里彻底收出来。
@@ -36,6 +40,27 @@ import java.util.List;
 public final class GameLauncher {
 
     private static final String TAG = "GameLauncher";
+
+    /**
+     * 重检测（{@code detect}/{@code detectDeep}）的工作线程。
+     *
+     * <p>TD-22：{@code detectDeep} 对每个候选文件逐个读魔数，大游戏目录在 UI 线程上同步跑会
+     * 直接 ANR（4000 目录项预算只是上限，不是主线程负担的上限）。裁决必须离开主线程，
+     * 但引擎的 {@code launch()} 要新建 Activity/容器，只能在主线程上做——这是两段的分界线。
+     *
+     * <p>单线程而不是 cached pool：裁决本身是短任务且互斥（同一时刻只有一次启动），
+     * 单线程既保证顺序也避免为一次点击起一堆线程。
+     */
+    private static final ExecutorService DECIDE_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "galgame-decide");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /** 异步启动回调（主线程调用）。 */
+    public interface LaunchCallback {
+        void onResult(Result result);
+    }
 
     private GameLauncher() {}
 
@@ -95,6 +120,73 @@ public final class GameLauncher {
         EngineDetector.Engine override = resolveOverride(preferredEngine);
         EngineDetector.Engine chosen = decide(gamePath, declared, override, context);
 
+        return launchWithDecision(context, gamePath, container, preferredEngine, chosen);
+    }
+
+    /**
+     * 异步启动：把 {@code decide()}（含 {@code detectDeep} 逐文件读魔数）挪到工作线程，
+     * 裁决完再回主线程做引擎调用。
+     *
+     * <p>UI 入口一律走这里；同步版 {@link #launch} 只留给探针/测试与「已经确定引擎」的调用点。
+     * 回调恒在主线程，且**一定会被调用一次**（异常也会转成 {@link Result#fail}），
+     * 否则调用方的加载提示会永远转下去。
+     */
+    public static void launchAsync(Context context, File gamePath, Container container,
+                                   String declaredEngine, String preferredEngine,
+                                   final LaunchCallback callback) {
+        if (callback == null) return;
+        if (context == null) {
+            callback.onResult(Result.fail("上下文缺失，无法启动"));
+            return;
+        }
+        // 运行时目录兜底要在进后台前判掉：这是纯名字判断，不需要线程切换
+        if (gamePath != null && EngineDetector.isRuntimeDirName(gamePath.getName())) {
+            callback.onResult(Result.fail(
+                    "该条目是引擎运行时目录，不是游戏；请「从库中移除」后重新导入正确的游戏文件夹"));
+            return;
+        }
+
+        final Handler main = new Handler(Looper.getMainLooper());
+        // 用 application context 进后台：Activity 在裁决期间可能已被回收（转屏/返回桌面），
+        // 但引擎启动仍应完成，不能因为 UI 销毁就把裁决结果丢掉。
+        final Context appContext = context.getApplicationContext() != null
+                ? context.getApplicationContext() : context;
+
+        DECIDE_EXECUTOR.execute(() -> {
+            EngineDetector.Engine chosen;
+            try {
+                EngineDetector.Engine declared = GameEngineRegistry.parseEngine(declaredEngine);
+                EngineDetector.Engine override = resolveOverride(preferredEngine);
+                chosen = decide(gamePath, declared, override, appContext);
+            } catch (Throwable t) {
+                // 裁决阶段任何异常都不能让回调静默丢失（否则 UI 一直显示「启动中」）
+                Log.e(TAG, "后台裁决失败", t);
+                final String msg = "启动裁决失败：" + t.getClass().getSimpleName();
+                main.post(() -> callback.onResult(Result.fail(msg)));
+                return;
+            }
+            final EngineDetector.Engine result = chosen;
+            main.post(() -> {
+                Result launched;
+                try {
+                    launched = launchWithDecision(context, gamePath, container, preferredEngine, result);
+                } catch (Throwable t) {
+                    Log.e(TAG, "主线程启动失败", t);
+                    launched = Result.fail("启动失败：" + t.getClass().getSimpleName());
+                }
+                callback.onResult(launched);
+            });
+        });
+    }
+
+    /**
+     * 裁决之后的所有步骤（解析引擎实现 → 可用性兜底 → 构造请求 → 调用引擎）。
+     *
+     * <p>从 {@link #launch} 抽出来，让「同步」与「异步」两条入口共用同一段逻辑：
+     * 两处各写一份是这类重构最容易出的漏（改了一条忘了另一条）。
+     */
+    private static Result launchWithDecision(Context context, File gamePath, Container container,
+                                             String preferredEngine, EngineDetector.Engine chosen) {
         GameEngine engine = GameEngineRegistry.resolve(chosen);
         boolean hasContainer = container != null;
 

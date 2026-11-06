@@ -46,6 +46,56 @@ public class XServer {
     private WinHandler winHandler;
     private final EnumMap<Lockable, ReentrantLock> locks = new EnumMap<>(Lockable.class);
     private boolean relativeMouseMovement = false;
+    /**
+     * 连接回收钩子（TD-10）。
+     *
+     * <p>X11 侧原先只有「请求处理」路径会把 IOException 变成 {@code killConnection}；
+     * 事件发送路径在 {@code XClient}/{@code EventListener} 里各自 catch 后吞掉，
+     * 于是坏连接会一直留在 epoll 上继续被写、反复刷栈。
+     *
+     * <p>为什么要绕一层接口：{@code killConnection} 属于 {@code XConnectorEpoll}（xconnector 层），
+     * 而 XServer 是 xserver 层，直接持有 connector 会把两层绑死；这里只认「怎么杀掉一个客户端」
+     * 这一个动作，由 {@code XServerComponent} 在 start() 时把 connector 的方法注入。
+     */
+    public interface ConnectionKiller {
+        void kill(XClient client);
+    }
+
+    private volatile ConnectionKiller connectionKiller;
+
+    public void setConnectionKiller(ConnectionKiller killer) {
+        this.connectionKiller = killer;
+    }
+
+    /**
+     * 事件写入失败后的连接回收（TD-10）。
+     *
+     * <p>没注入钩子时（单测/探针/未启动 connector 的场景）退回 {@code client.destroy()}：
+     * 至少把 fd 与流关掉，不让它继续被写。异常只记一条日志，绝不向上抛——
+     * 这里本身就在处理已经出错的写入路径，再抛会把调用方也带崩。
+     */
+    public void killBrokenConnection(XClient client, Throwable cause) {
+        if (client == null) return;
+        String reason = cause != null ? cause.getClass().getSimpleName() + ": " + cause.getMessage()
+                : "unknown";
+        android.util.Log.w("XServer", "事件写入失败，回收连接 fd=" + client.fd + "（" + reason + "）");
+        ConnectionKiller killer = connectionKiller;
+        if (killer != null) {
+            try {
+                killer.kill(client);
+                return;
+            }
+            catch (Throwable t) {
+                android.util.Log.w("XServer", "killConnection 失败，改为直接销毁流", t);
+            }
+        }
+        try {
+            client.destroy();
+        }
+        catch (Throwable ignored) {
+            // destroy 本身失败也无可挽回：fd 已不可用
+        }
+    }
 
     public XServer(XServerDisplayActivity activity, ScreenInfo screenInfo) {
         this.activity = activity;
