@@ -153,10 +153,12 @@ public final class GalgameLocaleInjector {
         if (!gameDir.isDirectory()) return null;
 
         // 旧容器（中文产品化 d798f16 之前导入）overlay 记录的 locale 可能是错的
-        //（如中文游戏被记为 ja_JP）。现场用 GalgameLanguageDetector 重检纠正：
-        // 保守判定下真日语游戏结果不变，中文游戏则被改为 zh_CN。
+        //（如中文游戏被记为 ja_JP）。现场用 GalgameLanguageDetector 重检纠正。
+        // TD-23：重检必须区分「有证据」和「没证据」—— 容器路径里只剩 ASCII gameId，
+        // 名称信号基本丢失；无证据时必须保留 overlay 里已有的值，否则会把用户/导入时
+        // 判好的 zh_CN 翻回 ja_JP。
         String exePath = overlay.optString("exe", "");
-        String detected = GalgameLanguageDetector.detectLocale(gameDir,
+        String detected = GalgameLanguageDetector.detectLocaleOrNull(gameDir,
                 exePath == null ? "" : new File(exePath).getName());
         if (detected != null && !detected.isEmpty()) language = detected;
 
