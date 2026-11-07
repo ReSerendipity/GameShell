@@ -19,6 +19,7 @@
 
 ### Changed
 
+- **根 README 对齐 §8 历史沿革边界**：删除修订元注记与「改版前后」对比，历史记录只保留指向 `CHANGELOG` / [`docs/README.md`](docs/README.md)；运行时资源按当前实际表述为「部分随源码分发」，并同步修正英文侧过时的「不附带大二进制」与整目录 `git restore` 指引。
 - **TD-13 焦点事件补齐 + 兜底设焦点**（`docs/tech-debt-register.md`、`docs/real-device-verification.md` §10.6）：xserver 新增 `events/FocusEvent`、`FocusIn`（type=9）、`FocusOut`（type=10），`WindowManager.setFocus` / `revertFocus` 按 X11 核心协议按 common ancestor 分支投递（此前只改字段不下发事件）；`DesktopHelper.setFocusedWindow` 加 `isRenderable()` 兜底——原来只有 `isApplicationWindow()`（要求 WM_HINTS window group 等于自身 id 且名字非空）成立才设焦点，KiriKiri 窗口不满足，导致 `InputDeviceManager` 的按键入口因 `focusedWindow == null` 全部 return。真机 logcat 已证服务端下发焦点（`focus 0 -> 20971526` → `focus 20971526 -> 3`）；**端到端仍未证**（该标题起容器约 2 s 内 X 连接即被关）。
 - **TD-16 复测结论：原「分辨率相关」假设证伪**（`docs/tech-debt-register.md`、`docs/real-device-verification.md` §10.5）：1920x1080 容器同样复现「画面静止 + 全区域点击无响应」——启动后 15/35/55 s 三帧逐字节相同（1,423,039 B / MD5 `8AC36B25A1549114C60DFCDCE1AD710A`），`XServerDisplayActivity` 存活，`game.exe` CPU 4.9%；`wine_exec.log` 止于 `Direct3D 初期化...` → 20 s 后 `CPU clock : 2457.6MHz`。`input tap` / `input swipe` 150 ms / `input motionevent DOWN+UP` / `input keyevent 66` 四路注入零效果，但同一条注入能打开本 fork 抽屉菜单 ⇒ 卡在「到 Wine 客户程序」这一段（与 TD-13 同族）。`dxvk`↔`wined3d`、`turnip,gladio`↔`virgl,gladio`、`direct`↔`touchpad` 四轴 A/B 全为同签名；实验后容器配置已还原。**未偿**：按键不被消费的确切原因待用 `+event,+win` 日志对照注入落点。
 

@@ -23,7 +23,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 ### 项目简介
 
-**GameShell** 是独立的 galgame 安卓运行器，内嵌 [`brunodev85/winlator-app`](https://github.com/brunodev85/winlator-app)（LGPL-2.1）作为 Windows 模拟层**源码组件**——集成与修改标注方式同内嵌的 Kirikiroid2 / Ren'Py，见 [`NOTICE`](NOTICE)。它在 APK 内同时内嵌 Ren'Py 与 Kirikiri2 原生运行时，导入游戏文件夹后自动识别引擎（v11.3 已覆盖 19 种指纹），在「内嵌原生引擎 / 外部原生播放器（可选）/ Winlator 模拟」之间智能路由，无需手工配置 Wine 容器。
+**GameShell** 是独立的 galgame 安卓运行器，内嵌 [`brunodev85/winlator-app`](https://github.com/brunodev85/winlator-app)（LGPL-2.1）作为 Windows 模拟层**源码组件**——集成与修改标注方式同内嵌的 Kirikiroid2 / Ren'Py，见 [`NOTICE`](NOTICE)。它在 APK 内同时内嵌 Ren'Py 与 Kirikiri2 原生运行时，导入游戏文件夹后自动识别引擎（当前覆盖 19 种引擎指纹），在「内嵌原生引擎 / 外部原生播放器（可选）/ Winlator 模拟」之间智能路由，无需手工配置 Wine 容器。
 
 > 治理规范：[ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
@@ -54,7 +54,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 ![仓库架构](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
 
-> **仓库架构**：依据仓库真实目录结构绘制（main @ f466b3a），展示 `app/`、`ci/`、`docs/`、`tools/` 与内嵌 Winlator 组件的关系。
+> **仓库架构**：依据仓库真实目录结构绘制，展示 `app/`、`ci/`、`docs/`、`tools/` 与内嵌 Winlator 组件的关系。
 
 ### 真实界面截图
 
@@ -65,7 +65,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 | ![游戏库空态](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-1-library.png) | ![设置](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-2-settings.png) |
 | **游戏库**：空态封面墙，含搜索与「导入游戏」入口 | **设置**：运行环境、输入控制、诊断等入口集中处 |
 
-> **注**：容器管理与工具页在 Swiss 单首页改版后不再有底部导航直达，需从游戏详情进入；完整真机（ARM64 + Vulkan）验收记录见 [`docs/real-device-verification.md`](docs/real-device-verification.md)。
+> **注**：容器与运行环境的管理入口在「设置 → 开发者 → 高级设置」；完整真机（ARM64 + Vulkan）验收记录见 [`docs/real-device-verification.md`](docs/real-device-verification.md)。
 
 ### 快速开始
 
@@ -77,7 +77,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 #### 1. 克隆并补齐运行时资源
 
-本仓库的运行时资源**部分随源码分发**（2026-11-05 评估整改：修正此前「不附带大二进制」的不准确表述）：
+本仓库的运行时资源**部分随源码分发**：
 
 - **git 跟踪（7 个文件，84,315,138 字节 ≈ 80.4 MiB）**：box64 0.4.5 运行时 `app/src/main/assets/box64/box64-0.4.5.tzst` 与 `box64-0.4.5-gstfix.tzst`，以及 `app/src/main/jniLibs/arm64-v8a/` 下 5 个原生库 `librenpython.so` / `libgame.so` / `libffmpeg.so` / `libSDL2.so` / `libmpshim.so`。`.gitignore` 的 `*.tzst`/`*.so` 规则只挡**新增** untracked 文件，不影响这些已跟踪文件。
 - **不跟踪（clone 后缺失，需补齐）**：Wine 侧运行时 `rootfs.tzst`、`rootfs_patches.tzst`、`pulseaudio.tzst`、`container_pattern.tzst` 与 `wincomponents/`。因此 clone 之后**不能直接 `./gradlew assembleDebug` 出完整可用的 APK**，需先从 Winlator 组件官方仓库取回这部分资源（`upstream` 远端即组件官方仓库，兼作按需移植官方修复的来源）：
@@ -138,7 +138,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 
 ### 使用示例
 
-1. 安装 APK 后打开应用，底部导航为「游戏库 / 容器管理 / 工具 / 设置」四个 Tab。（示例为改版前界面；改版后容器管理/工具从游戏详情进入，见上方截图注）
+1. 安装 APK 后打开应用，进入游戏库封面墙；设置从报头右侧的设置按钮进入（容器与运行环境管理在「设置 → 开发者 → 高级设置」）。
 2. 点「导入游戏」选择存放 galgame 的文件夹（启动 exe 须在所选文件夹顶层）。
 3. 向导自动检测引擎、创建容器、复制文件并注入日文环境。
 4. 回到游戏库，点封面墙中的游戏卡片即可启动。
@@ -147,13 +147,13 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 ### 常见问题
 
 **Q：构建报错找不到 `rootfs.tzst` / `wincomponents` 等 Wine 侧运行时？**
-A：Wine 侧运行时不入库。按上文「克隆并补齐运行时资源」一节对缺失路径执行 `git restore --source=upstream/main --worktree -- <路径>`（box64 `.tzst` 与 `jniLibs` 的 5 个 `.so` 已随仓库分发，缺它们才需要整目录补齐）。
+A：Wine 侧运行时不入库。按上文「克隆并补齐运行时资源」一节对缺失路径执行 `git restore --source=upstream/main --worktree -- <路径>`（box64 `.tzst` 与 `jniLibs` 的 5 个 `.so` 已随仓库分发，无需补齐）。
 
 **Q：`./gradlew` 下载 gradle-9.8.2-bin.zip 失败（PKIX 报错）？**
-A：代理/TLS 拦截导致。先检查 `~/.gradle/wrapper/dists/` 是否有完整版本，有则直接调用其二进制加 `--offline`；详见 README 原文与 [`ci/pre-push`](ci/pre-push)。
+A：代理/TLS 拦截导致。先检查 `~/.gradle/wrapper/dists/` 是否有完整版本，有则直接调用其二进制加 `--offline`；详见上文与 [`ci/pre-push`](ci/pre-push)。
 
 **Q：支持哪些引擎？**
-A：v11.3 已识别 19 种引擎指纹，包括 SiglusEngine、YU-RIS、Artemis、CatSystem2、AdvHD、SystemNNN、BGI、CMVS、Unity 等；识别逻辑见 [`app/src/main/java/com/winlator/galgame/`](app/src/main/java/com/winlator/galgame/)。
+A：当前识别 19 种引擎指纹，包括 SiglusEngine、YU-RIS、Artemis、CatSystem2、AdvHD、SystemNNN、BGI、CMVS、Unity 等；识别逻辑见 [`app/src/main/java/com/winlator/galgame/`](app/src/main/java/com/winlator/galgame/)。
 
 **Q：检测到加密怎么办？**
 A：应用仅作提示，不做破解。请自备已合法获得的、可直接运行的游戏文件。
@@ -163,17 +163,12 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ### 文档与治理
 
-- [架构评审记录](docs/ARCHITECTURE-REVIEW.md)
 - [原生引擎内嵌方案](docs/native-engine-integration.md)
 - [组件版本登记表](docs/component-versions.md)
-- [Wine / dxwrapper 兼容性调优（任务背景与真机取证）](docs/wine-dxwrapper-tuning.md)
-- [健壮性完整性评估（2026-10，导入事故链与处置）](docs/robustness-assessment-2026-10.md)
 - [真机验证报告](docs/real-device-verification.md)
-- [全屏修复复盘](docs/fullscreen-fix-retrospective.md)
 - [发布 / 回滚规范](docs/release-governance.md)
 - [技术债登记表](docs/tech-debt-register.md)
-- 完整文档索引见 [`docs/`](docs/)
-- docs 文档总索引：[docs/README.md](docs/README.md)（治理协作 / 记录台账 / 计划落地三组全链接）
+- 完整文档索引（含架构评审、评估与复盘记录）：[docs/README.md](docs/README.md)
 
 ### 贡献 / 安全 / 支持
 
@@ -192,7 +187,7 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ### Introduction
 
-**GameShell** is a standalone Android galgame player that embeds [Winlator](https://github.com/brunodev85/winlator-app) (LGPL-2.1) as its Windows-emulation source component — with modifications marked, same pattern as the bundled Kirikiroid2 / Ren'Py engines (see [`NOTICE`](NOTICE)). It also embeds Ren'Py and Kirikiri2 native runtimes inside the APK. After you pick a game folder, GameShell auto-detects the engine (19 fingerprints in v11.3) and routes the game to the embedded native engine, an optional external native player, or the Winlator emulation layer — no manual Wine container configuration needed.
+**GameShell** is a standalone Android galgame player that embeds [Winlator](https://github.com/brunodev85/winlator-app) (LGPL-2.1) as its Windows-emulation source component — with modifications marked, same pattern as the bundled Kirikiroid2 / Ren'Py engines (see [`NOTICE`](NOTICE)). It also embeds Ren'Py and Kirikiri2 native runtimes inside the APK. After you pick a game folder, GameShell auto-detects the engine (19 engine fingerprints) and routes the game to the embedded native engine, an optional external native player, or the Winlator emulation layer — no manual Wine container configuration needed.
 
 > Governance: [ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
@@ -219,7 +214,7 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ![Repository architecture](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
 
-> **Repository architecture**: Drawn from the actual directory tree (main @ f466b3a), showing `app/`, `ci/`, `docs/`, `tools/`, and the embedded Winlator component.
+> **Repository architecture**: Drawn from the actual directory tree, showing `app/`, `ci/`, `docs/`, `tools/`, and the embedded Winlator component.
 
 ### Screenshots
 
@@ -230,7 +225,7 @@ The screenshots below were captured on an x86_64 emulator (API 30, SwiftShader s
 | ![Library empty state](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-1-library.png) | ![Settings](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/readme-galgameshell-shot-2-settings.png) |
 | **Library**: empty cover wall with search and "Import Game" entry | **Settings**: runtime, input controls, diagnostics, and other entries |
 
-> **Note**: Container management and tools pages no longer have bottom-nav entries after the Swiss single-page redesign; they are reached from the game detail screen. Full ARM64 + Vulkan real-device verification records are in [`docs/real-device-verification.md`](docs/real-device-verification.md).
+> **Note**: Container and runtime management are under **Settings → Developer → Advanced Settings**. Full ARM64 + Vulkan real-device verification records are in [`docs/real-device-verification.md`](docs/real-device-verification.md).
 
 ### Quick Start
 
@@ -242,19 +237,24 @@ The screenshots below were captured on an x86_64 emulator (API 30, SwiftShader s
 
 #### 1. Clone and fetch runtime assets
 
-This repo **by design does not bundle large binary runtimes**: Wine / Box64 rootfs (`*.tzst`) and native libs (`*.so`) are distributed separately.
+Runtime assets are **partly distributed with the source**: 7 Git-tracked files (~80.4 MiB) — the box64 0.4.5 `*.tzst` files and five native libs under `app/src/main/jniLibs/arm64-v8a/`. The Wine-side runtime (`rootfs.tzst`, `rootfs_patches.tzst`, `pulseaudio.tzst`, `container_pattern.tzst`, `wincomponents/`) is not tracked, so a fresh clone cannot build a complete APK until those paths are restored.
 
 ```bash
 git clone https://github.com/ReSerendipity/GameShell.git
 cd GameShell
 
-# Restore excluded runtime assets and native libs (worktree only, not staged)
+# Restore the non-tracked Wine-side runtime only (exact paths; worktree only, not staged)
 git remote add upstream https://github.com/brunodev85/winlator-app
 git fetch upstream
-git restore --source=upstream/main --worktree -- app/src/main/assets app/src/main/jniLibs
+git restore --source=upstream/main --worktree -- \
+  app/src/main/assets/rootfs.tzst \
+  app/src/main/assets/rootfs_patches.tzst \
+  app/src/main/assets/pulseaudio.tzst \
+  app/src/main/assets/container_pattern.tzst \
+  app/src/main/assets/wincomponents
 ```
 
-> ⚠️ Do **not** use `git checkout upstream/main -- <path>`: tree-ish checkout stages the files, and `.gitignore` no longer applies to staged paths — a later `git commit` would bundle the large binaries. Use `git restore --worktree` so `git status` stays clean.
+> ⚠️ Do **not** use `git checkout upstream/main -- <path>`: tree-ish checkout stages the files, and `.gitignore` no longer applies to staged paths — a later `git commit` would bundle the large binaries. Use `git restore --worktree` so `git status` stays clean. Do not restore the whole `app/src/main/assets` / `app/src/main/jniLibs` directories either — the seven tracked binaries would be overwritten by upstream versions and the worktree left dirty.
 
 #### 2. Configure SDK and build
 
@@ -293,7 +293,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 
 ### Usage
 
-1. Install the APK and open the app. Bottom navigation has four tabs: **Library / Containers / Tools / Settings**. (This example describes the pre-redesign UI; after the redesign, Containers/Tools are reached from the game detail screen — see the screenshot note above.)
+1. Install the APK and open the app. You land on the library cover wall; tap the settings icon in the header to open Settings (container and runtime management live under **Settings → Developer → Advanced Settings**).
 2. Tap **Import Game** and pick a folder containing your galgame (the launcher exe must be at the top level).
 3. The wizard detects the engine, creates a container, copies files, and injects Japanese locale.
 4. Return to the library and tap the game card to launch.
@@ -301,14 +301,14 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 
 ### FAQ
 
-**Q: Build fails with missing `librenpython.so` / `*.tzst`?**
-A: You haven't fetched the runtime assets yet. Run the `git restore --source=upstream/main --worktree -- …` step above.
+**Q: Build fails with missing `rootfs.tzst` / `wincomponents`?**
+A: The Wine-side runtime is not tracked. Run the `git restore --source=upstream/main --worktree -- <path>` step above for the missing paths. The box64 `*.tzst` files and the five `jniLibs/*.so` files are tracked and already present in a fresh clone.
 
 **Q: `./gradlew` fails downloading gradle-9.8.2-bin.zip (PKIX error)?**
 A: TLS interception in a proxy/VPN environment. Check `~/.gradle/wrapper/dists/` for a complete alternative version and invoke its binary with `--offline`. See the build notes in this file and [`ci/pre-push`](ci/pre-push).
 
 **Q: Which engines are supported?**
-A: v11.3 detects 19 engine fingerprints including SiglusEngine, YU-RIS, Artemis, CatSystem2, AdvHD, SystemNNN, BGI, CMVS, Unity, and more. Detection logic lives in [`app/src/main/java/com/winlator/galgame/`](app/src/main/java/com/winlator/galgame/).
+A: GameShell detects 19 engine fingerprints including SiglusEngine, YU-RIS, Artemis, CatSystem2, AdvHD, SystemNNN, BGI, CMVS, Unity, and more. Detection logic lives in [`app/src/main/java/com/winlator/galgame/`](app/src/main/java/com/winlator/galgame/).
 
 **Q: What about encrypted games?**
 A: The app detects encryption and warns, but does not crack. Please provide legally obtained, directly runnable game files.
@@ -318,13 +318,11 @@ A: This project distributes source only. Releases attach a CycloneDX SBOM and SH
 
 ### Documentation and Governance
 
-- [Architecture review records](docs/ARCHITECTURE-REVIEW.md)
 - [Native engine integration notes](docs/native-engine-integration.md)
 - [Real-device verification report](docs/real-device-verification.md)
-- [Fullscreen fix retrospective](docs/fullscreen-fix-retrospective.md)
 - [Release / rollback governance](docs/release-governance.md)
 - [Technical debt register](docs/tech-debt-register.md)
-- Full index: [`docs/`](docs/)
+- Full index (including architecture reviews, assessments, and retrospectives): [docs/README.md](docs/README.md)
 
 ### Contributing / Security / Support
 
