@@ -446,6 +446,57 @@ D XWindowFocus: focus 20971526 -> 3 (out 1, in 0)
 - 结论口径：**机制已补并经服务端日志证实，端到端仍是 open**，债项在 `docs/tech-debt-register.md` 里保持「部分偿还」，不进四份总账的「已关闭」。
 
 
+### 10.7 TD-03 索引与容器对账（2026-11-07 夜，设备 dc57ebe3）
+
+债项原文：删除容器不会自动清索引条目。这轮不改容器侧，改**真值口径**——容器列表是「有容器的游戏」的唯一真值，`galgame_library.json` 只负责原生条目与用户元数据（品类 / 标签 / 封面 / 运行方式 override），`containerized` 从此只是派生缓存。
+
+**代码改动（3 个文件）**
+
+| 文件 | 改动 | 作用 |
+|---|---|---|
+| `galgame/GalgameLibraryIndex.java` | 改 | 新增 `loadReconciled(context, containerGameIds)` + `sourceAlive()` + `archivePruned()`：对账三条分支（降级为原生 / 移出并留档 / 补标已容器化），仅在发生变化时写盘 |
+| `GalgameHomeFragment.java` | 改 | `refresh()` 先遍历容器收集 gameId，再 `loadReconciled` 读索引，最后才建卡片 |
+| `galgame/ui/GalgameLibraryActivity.java` | 改 | 同一口径（这个页面此前各读一次索引与容器，两处各写各的视图） |
+
+**真机怎么验的**：直接用 `run-as com.winlator` 注入一份「含 3 类问题」的索引（原索引已先备份），再冷启一次应用看日志与文件，最后把备份写回并复核幂等。
+
+注入的 4 条（第 1、2 条是真实条目，第 3、4 条是构造样本）：
+
+| game_id | 注入状态 | 期望 |
+|---|---|---|
+| `______________H________-6b0d` | `containerized=true`，容器存在（`xuser-1`） | 原样保留 |
+| `krkr_tobenai` | `containerized=false`，容器存在（`xuser` / `xuser-2`） | **补标为 true** |
+| `td03-revive` | `containerized=true`，无容器，`source_path` 指向仍存在的 `files/galgame-native/krkr_tobenai` | **降级为原生**（`containerized=false`） |
+| `td03-orphan` | `containerized=true`，无容器、无源 | **移出索引 + 留档** |
+
+**取证**
+
+```
+I GalgameLibraryIndex: 索引对账：降级为原生 1 条，移出失效 1 条，补标已容器化 1 条
+```
+
+索引文件对账后（`run-as com.winlator cat files/galgame_library.json`）：`______________H…` 仍 `true`、`krkr_tobenai` 变 `true`、`td03-revive` 变 `false`、`td03-orphan` 消失。
+
+留档文件（`run-as com.winlator cat files/galgame_library.pruned.json`）：
+
+```json
+{
+  "version": 1,
+  "reason": "container_missing_and_source_gone",
+  "pruned_at": 1794068828493,
+  "games": [ { "game_id": "td03-orphan", "title": "TD03 应被清理", "containerized": true, "genre": "vn", "tags": ["孤儿"] … } ]
+}
+```
+
+库页（`uiautomator dump`）：卡片为 `krkr_tobenai`、`椎名真穂のヒミツ`、`TD03 应复活为原生` 三张 —— 复活的原生条目**可见**，孤儿条目**不出现**（截图 `td03-lib.png`）。
+
+**幂等与还原**：把备份索引写回、删掉留档文件，再 `am force-stop` + 冷启一次 —— **没有对账日志**（未发生变化即不写盘），索引回到原始 2 条。设备侧不留测试数据。
+
+**边界（写进债表）**
+
+- 容器侧的重复没动：真机上 `files/rootfs/home/xuser` 与 `xuser-2` 都在用 `id=2` 且名字都是 `galgame-krkr_tobenai`，这是容器创建路径的遗留（对账按 gameId 集合处理，重复容器会被当成同一个游戏）。属另案。
+- 源目录判活是 `File.exists()`，依赖 `MANAGE_EXTERNAL_STORAGE`（本机 `appops get com.winlator MANAGE_EXTERNAL_STORAGE` = `allow`）；若该权限被收回，源在外置存储的原生条目会被判死——故移出的条目一律整条留档而不是丢弃。
+
 ## 11. 返回键 UX 与性能显示开关（2026-10-25 第四轮，设备 dc57ebe3）
 
 ### 11.1 现象取证（修复前，构建 6bd95bf）

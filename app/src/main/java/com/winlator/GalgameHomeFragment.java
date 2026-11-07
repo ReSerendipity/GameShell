@@ -357,12 +357,23 @@ public class GalgameHomeFragment extends Fragment {
         containerManager = new ContainerManager(requireContext());
         master.clear();
 
+        List<Container> containers = containerManager.getContainers();
+        java.util.Set<String> containerIds = new java.util.HashSet<>();
+        if (containers != null) {
+            for (Container c : containers) {
+                String name = c.getName();
+                if (name == null || !name.startsWith(CONTAINER_PREFIX)) continue;
+                containerIds.add(name.substring(CONTAINER_PREFIX.length()));
+            }
+        }
+
         indexMap.clear();
-        for (GalgameLibraryIndex.Entry e : GalgameLibraryIndex.load(requireContext())) {
+        // 索引与容器对账（TD-03）：容器被删（含在 Winlator 容器列表里删的）后，
+        // 索引里「已容器化」的失效条目在这里降级/清理，不再无限期残留。
+        for (GalgameLibraryIndex.Entry e : GalgameLibraryIndex.loadReconciled(requireContext(), containerIds)) {
             indexMap.put(e.gameId, e);
         }
 
-        List<Container> containers = containerManager.getContainers();
         if (containers != null) {
             for (Container c : containers) {
                 String name = c.getName();

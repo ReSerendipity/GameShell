@@ -16,6 +16,7 @@
 
 - **X server 事件发送在客户端断连时抛 `ConcurrentModificationException`，真机整进程 SIGABRT**：`XClient.freeResources()` 会重入销毁窗口，在 `Window.sendEvent` 的 for-each 循环里改掉同一个 `eventListeners`；crash buffer 的 abort message 为 `JNI CallVoidMethod called with pending exception java.util.ConcurrentModificationException`，栈为 `Window.sendEvent` ← `WindowManager.removeAllSubwindowsAndWindow` ← `destroyWindow` ← `XClient.freeResources`。五个 `sendEvent` 重载改为快照迭代（`snapshotEventListeners()`）。
 - **启动期提示在 X 窗口事件线程弹 Toast，真机必崩**：`GalgameInputHelper.showStartupDialogHint()` 原先直接 `Toast.makeText(...).show()`，而回调来自 XServer 窗口事件线程（无 Looper），真机每次进 KiriKiri 容器都是`Fatal signal 6 (SIGABRT)`：`JNI DETECTED ERROR ... Can't toast on a thread that has not called Looper.prepare()`，`Process com.winlator has died`、`XServerDisplayActivity` 被 force finish。改为把 `context / screenSize / 推荐档 / 文案`先取成 final 局部量，再 `new Handler(Looper.getMainLooper()).post(...)` 在主线程弹，并 `try / catch RuntimeException`记 `Log.w`。真机复核：`Window{... u0 Toast}` 走到 `HAS_DRAWN`、进程不再自杀、游戏停在尺寸对话框。
+- **TD-03 索引与容器对账：删除容器后不再残留索引条目**（`docs/tech-debt-register.md`、`docs/real-device-verification.md` §10.7）：口径改为「容器列表是容器游戏的唯一真值，索引只管原生条目与用户元数据」；新增 `GalgameLibraryIndex.loadReconciled()`，两个列表页（首页与游戏库）刷新时对账——容器已删但源还在 ⇒ 降级为原生条目；容器与源都没了 ⇒ 移出索引并整条留档到 `galgame_library.pruned.json`；未标容器但容器存在 ⇒ 补标避免重复展示。真机一次触发三条分支（`索引对账：降级为原生 1 条，移出失效 1 条，补标已容器化 1 条`），还原后再启无对账日志（幂等）。
 
 ### Changed
 

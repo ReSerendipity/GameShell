@@ -107,12 +107,22 @@ public class GalgameLibraryActivity extends AppCompatActivity {
     private void refresh() {
         items.clear();
 
+        List<Container> containers = containerManager.getContainers();
+        java.util.Set<String> containerIds = new java.util.HashSet<>();
+        if (containers != null) {
+            for (Container c : containers) {
+                String name = c.getName();
+                if (name == null || !name.startsWith(CONTAINER_PREFIX)) continue;
+                containerIds.add(name.substring(CONTAINER_PREFIX.length()));
+            }
+        }
+
         java.util.Map<String, GalgameLibraryIndex.Entry> index = new java.util.HashMap<>();
-        for (GalgameLibraryIndex.Entry e : GalgameLibraryIndex.load(this)) {
+        // 索引与容器对账（TD-03）：容器删掉后，索引里的失效条目在这里降级/清理。
+        for (GalgameLibraryIndex.Entry e : GalgameLibraryIndex.loadReconciled(this, containerIds)) {
             index.put(e.gameId, e);
         }
 
-        List<Container> containers = containerManager.getContainers();
         if (containers != null) {
             for (Container c : containers) {
                 String name = c.getName();

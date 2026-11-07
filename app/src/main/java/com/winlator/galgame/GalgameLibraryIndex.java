@@ -203,6 +203,124 @@ public final class GalgameLibraryIndex {
         return load(readRaw(context));
     }
 
+    public static final String PRUNED_FILE_NAME = "galgame_library.pruned.json";
+
+    /**
+     * 读索引并**按容器列表对账**（TD-03「索引与容器双真值」的收口点）。
+     *
+     * <p>真值划分：<b>容器列表是「有容器的游戏」的唯一真值</b>，索引只负责
+     * 「无容器的原生游戏」与用户元数据（品类 / 标签 / 封面 / 运行方式 override）。
+     * 于是索引里的 {@code containerized} 只是<b>缓存下来的派生状态</b>，
+     * 每次列表刷新都拿容器列表重算：
+     * <ul>
+     *   <li>标了已容器化、但容器已被删（Winlator 容器列表里删的也算）：
+     *       源目录还活着 ⇒ **降级为原生条目**（游戏仍在，不该消失）；
+     *       源目录也没了 ⇒ 视为失效条目，**移出索引**并整条留档到
+     *       {@code galgame_library.pruned.json}（不静默丢数据）；</li>
+     *   <li>没标已容器化、却存在同名容器 ⇒ 补标已容器化（避免同一游戏被列两次）。</li>
+     * </ul>
+     *
+     * <p>只有发生实际变化才落盘，正常情况下本方法就是一次读。
+     *
+     * @param containerGameIds 当前容器名去掉 {@code galgame-} 前缀后的 gameId 集合
+     */
+    public static List<Entry> loadReconciled(Context context,
+                                             java.util.Collection<String> containerGameIds) {
+        if (context == null) return Collections.emptyList();
+        java.util.HashSet<String> ids = new java.util.HashSet<>();
+        if (containerGameIds != null) {
+            for (String id : containerGameIds) {
+                if (id != null && !id.isEmpty()) ids.add(id);
+            }
+        }
+        synchronized (LOCK) {
+            File f = indexFile(context);
+            if (f == null) return Collections.emptyList();
+            List<Entry> all = parse(readRaw(f));
+            if (all == null) {
+                quarantine(f);
+                return Collections.emptyList();
+            }
+            boolean dirty = false;
+            int revived = 0, promoted = 0;
+            List<Entry> kept = new ArrayList<>(all.size());
+            List<Entry> pruned = new ArrayList<>();
+            for (Entry e : all) {
+                boolean hasContainer = ids.contains(e.gameId);
+                if (e.containerized && !hasContainer) {
+                    dirty = true;
+                    if (sourceAlive(e.sourcePath)) {
+                        kept.add(e.withContainerized(false));
+                        revived++;
+                    } else {
+                        pruned.add(e);
+                    }
+                    continue;
+                }
+                if (!e.containerized && hasContainer) {
+                    kept.add(e.withContainerized(true));
+                    promoted++;
+                    dirty = true;
+                    continue;
+                }
+                kept.add(e);
+            }
+            if (dirty) {
+                writeQuietly(f, kept);
+                if (!pruned.isEmpty()) archivePruned(f, pruned);
+                Log.i(TAG, "索引对账：降级为原生 " + revived + " 条，移出失效 "
+                        + pruned.size() + " 条，补标已容器化 " + promoted + " 条");
+            }
+            return Collections.unmodifiableList(kept);
+        }
+    }
+
+    /** 原生条目的源目录是否还在（容器游戏本体在容器内，sourcePath 为 null）。 */
+    private static boolean sourceAlive(String sourcePath) {
+        if (sourcePath == null || sourcePath.isEmpty()) return false;
+        try {
+            return new File(sourcePath).exists();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 把被移出的条目追加到 {@code galgame_library.pruned.json}：留档而不静默丢，
+     * 误删（外置盘临时未挂载等）时可以按原字段手工放回索引。
+     */
+    private static void archivePruned(File indexFile_, List<Entry> pruned) {
+        if (indexFile_ == null || pruned == null || pruned.isEmpty()) return;
+        File archive = new File(indexFile_.getParentFile(), PRUNED_FILE_NAME);
+        try {
+            JSONObject root = new JSONObject();
+            JSONArray arr = new JSONArray();
+            if (archive.isFile()) {
+                List<Entry> old = parse(readRaw(archive));
+                if (old != null) for (Entry e : old) arr.put(e.toJson());
+            }
+            for (Entry e : pruned) arr.put(e.toJson());
+            root.put("version", VERSION);
+            root.put("reason", "container_missing_and_source_gone");
+            root.put("pruned_at", System.currentTimeMillis());
+            root.put("games", arr);
+            File tmp = new File(archive.getAbsolutePath() + ".tmp");
+            try (FileOutputStream out = new FileOutputStream(tmp, false)) {
+                out.write(root.toString(2).getBytes(StandardCharsets.UTF_8));
+                out.getFD().sync();
+            }
+            if (tmp.renameTo(archive)) return;
+            if (archive.exists() && !archive.delete()) {
+                Log.w(TAG, "留档替换失败（旧文件删不掉）：" + archive);
+                return;
+            }
+            if (!tmp.renameTo(archive)) Log.w(TAG, "留档替换失败：" + archive);
+        } catch (Exception e) {
+            // 留档失败不该丢调用方流程，但要在日志里点名
+            Log.w(TAG, "写入失效条目留档失败：" + archive, e);
+        }
+    }
+
     /** 按 gameId 查条目，无则 null。 */
     public static Entry find(Context context, String gameId) {
         if (gameId == null || gameId.isEmpty()) return null;
