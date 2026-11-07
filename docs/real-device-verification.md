@@ -377,7 +377,7 @@ YU-RIS / SystemNNN / ADVHD / BGI 无一通过。
 | `test_advhd`（リビドー・アバンちゅ～る） | 启动即退回库页 | exe 静态导入 icu.dll（仅用 uloc_getDefault），加载器 c0000135；补桩后可见 **Enigma Protector+PlayDRM** 双重商业保护，解壳后自主退出 | icu 桩注入（加载通过） | **仍不可玩**：DRM 行为，按 A5 不破解，登记为不可玩 |
 | `advhd_toran` | 启动即退回库页 | 同上 icu.dll 缺失；过加载关后再崩于 d2d1/DirectWrite（TD-17，上游 Wine 能力缺口） | 同上 | 引擎可加载、1280x720 窗口可建，渲染链崩（TD-17） |
 | `bgi_ryo`（両腕が折れたので…） | 启动即退回库页（§7.4「未定」） | 非 ASCII 主程序路径在 wine 启动器**早期**（prefix 加载前、ACP 未初始化）被按 ANSI 解析为乱码宽字符 → 文件打不开（`+file,+nls` 取证：get_load_order 收到乱码名）。**双层真相**：当年验收脚本的转义确实也坏，两层都真 | `gs_launch.exe` ASCII 硬链接别名 + 启动改走别名 | **完整可玩**：进入游戏、满幅渲染 90.3%（含窗口铺满变换） |
-| `krkr_tobenai` | 流程挂起 | 480x280 主窗口映射后画面静止、点击全无响应；Decorated A/B 排除上轮修复副作用 | — | 登记 TD-16 独立排查（当年 §8.4 在 1920 容器通过） |
+| `krkr_tobenai` | 流程挂起 | 480x280 主窗口映射后画面静止、点击全无响应；Decorated A/B 排除上轮修复副作用 | — | TD-16 独立排查中；**2026-11-07 复测**：1920x1080 容器同样复现（三帧逐字节相同、输入四路注入零效果、`game.exe` 存活 4.9% CPU），原「分辨率相关」假设证伪，详见 §10.5 |
 
 ### 10.3 启动对话框自动应答（教学-回放）
 
@@ -392,6 +392,22 @@ YU-RIS / SystemNNN / ADVHD / BGI 无一通过。
   待首个可复现对话框样本。
 - 附带修复：S: 重定向目标目录自愈（appdata/roaming、local），icu 桩资产声明入 NOTICE。
 - **2026-11-07 补（TD-15 机制侧两处，见 tech-debt-register）**：回放加了「1.5 s 后复查、对话框还在就补点」（单会话最多 3 次）；新增「无教学点时提示一次推荐档位」（`StartupDialogGuide`，容器之内最大档）。本机验证到的是：debug 包装机后跑通一个真实 Wine 容器游戏（`XServerDisplayActivity` 正常、无 FATAL），以及推荐档位逻辑 22/22 断言全 PASS。**对话框本身没能在本机出现**——GameShell 库只剩 1 个 UNITY 标题，KiriKiri 样本未导入（SAF 选择器里按目录名翻找失败），所以本节原有的「教学 ✓ / 回放 ✓」记录仍是 2026-10-25 的真机结论，本轮没有把它往前推。
+
+
+### 10.5 TD-16 复现与四轴 A/B（2026-07-11 记 → 2026-11-07 实测，设备 dc57ebe3）
+
+债项原文（`docs/tech-debt-register.md` TD-16）判「容器 xuser-16（1280x720）内启动流程挂起」，并给出对照实验建议「1920 容器重建复测」。本轮把对照臂做了，**结论与该假设相反**：1920x1080 同样挂起。
+
+| 臂 | 容器配置 | 结果 | 证据 |
+|---|---|---|---|
+| A | `galgame-krkr_tobenai` 1920x1080，`dxvk` + `turnip,gladio`，`direct` 触控 | 复现 | 启动后 15/35/55 s 三帧 1,423,039 B、MD5 `8AC36B25A1549114C60DFCDCE1AD710A` 全同；`XServerDisplayActivity` 全程 `topResumedActivity`；`wine_exec.log` 尾部 `Direct3D 初期化...` → 20 s 后 `CPU clock : 2457.6MHz` 后无输出 |
+| B | 同上，`dxwrapper` 改 `wined3d` | 复现 | 同签名；日志多一行 `[BOX64] Error initializing native libEGL.so.1（No such file or directory）` |
+| C | 同上，图形驱动改 `virgl,gladio` | 复现 | 同签名，画面帧 1,426,177 B（仅光标位置不同） |
+| D | 同上，触控模式改 `touchpad`（菜单内切换） | 复现 | 同签名，`input tap` 仍只动光标不触发按钮 |
+
+输入取证（A 臂同一画面）：`input tap` 连点 3 次、`input swipe` 同点 150 ms 按住、`input motionevent DOWN`+`UP`、`input keyevent 66` 全部零效果（帧 MD5 只在光标移动时变）；但 `input tap 2630 150` 能稳定打开本 fork 抽屉菜单（dump 到 `触控模式 / 性能显示 / 键盘 / 退出` 四行），说明注入到 app 层是通的，卡在「到 Wine 客户程序」这一段，与 TD-13 同族。进程侧 `game.exe` CPU 4.9%、`wineserver` 3.2%，不是崩溃或 OOM。
+
+四组实验后容器配置已逐项还原为原值（`graphicsDriver=turnip,gladio`、`dxwrapper=dxvk`、`touchMode=direct`），设备侧无残留改动。**未偿**：指针按键事件不被消费的确切原因未定，下一步用 `+event,+win` 级 Wine 日志对照 X server 侧注入落点。
 
 ### 10.4 本轮回归
 

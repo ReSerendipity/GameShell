@@ -1,6 +1,9 @@
 package com.winlator.galgame;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -106,12 +109,21 @@ public final class GalgameInputHelper {
      * 零盲点约束。推荐值由 {@link StartupDialogGuide} 按容器分辨率算出（容器之内最大档）。
      */
     private static void showStartupDialogHint(View rootView, Container container) {
-        Context context = rootView.getContext();
+        final Context context = rootView.getContext();
         if (context == null) return;
-        String recommended = StartupDialogGuide.describeRecommendation(
-                container.getScreenSize(), context.getString(R.string.galgame_startup_dialog_size_too_small));
-        Toast.makeText(context,
-                context.getString(R.string.galgame_startup_dialog_hint, container.getScreenSize(), recommended),
-                Toast.LENGTH_LONG).show();
+        final String screenSize = container.getScreenSize();
+        final String recommended = StartupDialogGuide.describeRecommendation(
+                screenSize, context.getString(R.string.galgame_startup_dialog_size_too_small));
+        final String text = context.getString(R.string.galgame_startup_dialog_hint, screenSize, recommended);
+        // 回调来自 XServer 窗口事件线程（无 Looper），直接 Toast 会抛
+        // "Can't toast on a thread that has not called Looper.prepare()" 并被 JNI 检查 abort。
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+            }
+            catch (RuntimeException e) {
+                Log.w("GalgameInputHelper", "startup dialog hint toast failed", e);
+            }
+        });
     }
 }
