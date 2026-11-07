@@ -320,8 +320,17 @@ public class Window extends XResource {
         return false;
     }
 
+    /**
+     * 快照迭代用的监听器数组。客户端断连时 freeResources 会在 sendEvent 的循环体内重入销毁
+     * 窗口并从同一列表里移除监听器，直接 for-each 会抛 ConcurrentModificationException，
+     * 在 JNI 调用边界变成 SIGABRT 把整个进程带走（TD-13 真机实测）。
+     */
+    private EventListener[] snapshotEventListeners() {
+        return eventListeners.toArray(new EventListener[0]);
+    }
+
     public void sendEvent(int eventId, Event event) {
-        for (EventListener eventListener : eventListeners) {
+        for (EventListener eventListener : snapshotEventListeners()) {
             if (eventListener.isInterestedIn(eventId)) {
                 eventListener.sendEvent(event);
             }
@@ -329,7 +338,7 @@ public class Window extends XResource {
     }
 
     public void sendEvent(Bitmask eventMask, Event event) {
-        for (EventListener eventListener : eventListeners) {
+        for (EventListener eventListener : snapshotEventListeners()) {
             if (eventListener.isInterestedIn(eventMask)) {
                 eventListener.sendEvent(event);
             }
@@ -337,7 +346,7 @@ public class Window extends XResource {
     }
 
     public void sendEvent(int eventId, Event event, XClient client) {
-        for (EventListener eventListener : eventListeners) {
+        for (EventListener eventListener : snapshotEventListeners()) {
             if (eventListener.isInterestedIn(eventId) && eventListener.client == client) {
                 eventListener.sendEvent(event);
             }
@@ -345,7 +354,7 @@ public class Window extends XResource {
     }
 
     public void sendEvent(Bitmask eventMask, Event event, XClient client) {
-        for (EventListener eventListener : eventListeners) {
+        for (EventListener eventListener : snapshotEventListeners()) {
             if (eventListener.isInterestedIn(eventMask) && eventListener.client == client) {
                 eventListener.sendEvent(event);
             }
@@ -353,7 +362,7 @@ public class Window extends XResource {
     }
 
     public void sendEvent(Event event) {
-        for (EventListener eventListener : eventListeners) eventListener.sendEvent(event);
+        for (EventListener eventListener : snapshotEventListeners()) eventListener.sendEvent(event);
     }
 
     public boolean isRenderable() {

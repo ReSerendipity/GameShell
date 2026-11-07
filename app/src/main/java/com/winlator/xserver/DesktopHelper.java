@@ -60,6 +60,13 @@ public abstract class DesktopHelper {
         else if (window.isDialogBox()) {
             winHandler.bringToFront(window.getClassName(), window.getHandle());
         }
+        else if (window.isRenderable()) {
+            // 兜底（TD-13）：上面两条判据都依赖 WM_HINTS / 标题等属性，KiriKiri 这类窗口
+            // 既没有 group hints、名字也可能为空，于是永远进不了 focusedWindow —— 键盘事件
+            // 因此没有接收窗口。只要它是可渲染的客户窗口，就照样把焦点给它。
+            boolean parentIsRoot = window.getParent() == xServer.windowManager.rootWindow;
+            xServer.windowManager.setFocus(window, parentIsRoot ? WindowManager.FocusRevertTo.POINTER_ROOT : WindowManager.FocusRevertTo.PARENT);
+        }
     }
 
     private static void setupXResources(XServer xServer) {

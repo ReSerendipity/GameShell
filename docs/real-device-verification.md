@@ -413,6 +413,39 @@ YU-RIS / SystemNNN / ADVHD / BGI 无一通过。
 
 `krkr_caste` 窗口铺满 78.8% 无变化；`bgi_ryo` 满幅 90.3%；别名/自愈幂等（二次启动无重复动作）。
 
+### 10.6 TD-13 焦点事件下发（2026-11-07 夜，设备 dc57ebe3）
+
+债项原文判「Winlator 的 X server 未实现焦点事件」。本轮把机制补上，并在真机拿到「服务端确实在下发」的直接证据；端到端（Wine 客户程序是否收到按键）仍未证。
+
+**代码改动（4 个文件）**
+
+| 文件 | 改动 | 作用 |
+|---|---|---|
+| `xserver/events/FocusEvent.java` | 新建 | `Detail`（ANCESTOR…NONE 8 值）与 `Mode`（NORMAL/GRAB/UNGRAB）枚举；协议布局 `type / detail / sequence / event.id / mode / pad15` |
+| `xserver/events/FocusIn.java`、`FocusOut.java` | 新建 | type=9 / type=10 的两个具体事件 |
+| `xserver/WindowManager.java` | 改 | `setFocus` / `revertFocus` 先存 `previousWindow` 再改字段，末尾调 `notifyFocusChange`：两条到 root 的路径求 common ancestor，FocusOut 由深到浅、FocusIn 由浅到深，按 `Event.FOCUS_CHANGE` 过滤；`focusDetail` 对 root 按 revertTo 给 `POINTER_ROOT`/`NONE`，其余给 `NONLINEAR` |
+| `xserver/DesktopHelper.java` | 改 | `setFocusedWindow` 加 `isRenderable()` 兜底分支（见下） |
+
+**兜底设焦点为什么是必需的**：`DesktopHelper.setFocusedWindow` 原来只在 `window.isApplicationWindow()` 成立时 `setFocus`，而该判据要求 `WM_HINTS.WINDOW_GROUP == id` 且 `getName()` 非空。KiriKiri 的窗口两条都不满足 ⇒ `focusedWindow` 一直为 null ⇒ `InputDeviceManager.onKeyPress` / `onKeyRelease` 首行的 `if (focusedWindow == null) return;` 直接吞掉所有按键。**这才是「按键到不了」的直接成因**，与「事件类缺失」是两件事，两件都补了。
+
+**顺带修掉的真机崩溃**：新代码上线后第一次进容器即 `Fatal signal 6 (SIGABRT)`，crash buffer 的 abort message 是 `JNI DETECTED ERROR IN APPLICATION: JNI CallVoidMethod called with pending exception java.util.ConcurrentModificationException`，栈为 `Window.sendEvent` ← `WindowManager.removeAllSubwindowsAndWindow` ← `destroyWindow` ← `XClient.freeResources` ← `handleConnectionShutdown`。成因：客户端断连时在 `sendEvent` 的 for-each 循环体内重入销毁窗口，把同一个 `eventListeners` 改掉。五个 `sendEvent` 重载全部改为快照迭代（`snapshotEventListeners()`）。
+
+**真机取证（logcat，`logcat -c` 后冷启一次容器）**
+
+```
+D XWindowFocus: focus 0 -> 20971526 (out 0, in 2)
+D XWindowFocus: focus 20971526 -> 3 (out 1, in 0)
+```
+
+第一条：焦点从「无」交给 client 窗口 `0x1400006`，FocusIn 覆盖 2 个窗口（窗口 + 其祖先）——说明投递链真的走通了；第二条：Wine 连接断开后 revert 到 root（`3`）。
+
+**未偿 / 未证**
+
+- 端到端仍未证：该标题起容器后约 2 s 内 `files/wine_exec.log` 就以 `X connection to :0 broken (explicit kill or server shutdown)` 收尾，引擎是否有机会消费按键无从判定。
+- 导航抖动：`BTLaunch [70,1440][1194,1608]` 上连点会出现「进 `XServerDisplayActivity`（t+3 s 仍在）→ t+9 s 退回详情/库页」的抖动，同一坐标有时被判为「点到了返回」，所以「按坐标驱动到游戏内」这一步本身不可靠。
+- 结论口径：**机制已补并经服务端日志证实，端到端仍是 open**，债项在 `docs/tech-debt-register.md` 里保持「部分偿还」，不进四份总账的「已关闭」。
+
+
 ## 11. 返回键 UX 与性能显示开关（2026-10-25 第四轮，设备 dc57ebe3）
 
 ### 11.1 现象取证（修复前，构建 6bd95bf）

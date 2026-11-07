@@ -14,10 +14,12 @@
 
 ### Fixed
 
+- **X server 事件发送在客户端断连时抛 `ConcurrentModificationException`，真机整进程 SIGABRT**：`XClient.freeResources()` 会重入销毁窗口，在 `Window.sendEvent` 的 for-each 循环里改掉同一个 `eventListeners`；crash buffer 的 abort message 为 `JNI CallVoidMethod called with pending exception java.util.ConcurrentModificationException`，栈为 `Window.sendEvent` ← `WindowManager.removeAllSubwindowsAndWindow` ← `destroyWindow` ← `XClient.freeResources`。五个 `sendEvent` 重载改为快照迭代（`snapshotEventListeners()`）。
 - **启动期提示在 X 窗口事件线程弹 Toast，真机必崩**：`GalgameInputHelper.showStartupDialogHint()` 原先直接 `Toast.makeText(...).show()`，而回调来自 XServer 窗口事件线程（无 Looper），真机每次进 KiriKiri 容器都是`Fatal signal 6 (SIGABRT)`：`JNI DETECTED ERROR ... Can't toast on a thread that has not called Looper.prepare()`，`Process com.winlator has died`、`XServerDisplayActivity` 被 force finish。改为把 `context / screenSize / 推荐档 / 文案`先取成 final 局部量，再 `new Handler(Looper.getMainLooper()).post(...)` 在主线程弹，并 `try / catch RuntimeException`记 `Log.w`。真机复核：`Window{... u0 Toast}` 走到 `HAS_DRAWN`、进程不再自杀、游戏停在尺寸对话框。
 
 ### Changed
 
+- **TD-13 焦点事件补齐 + 兜底设焦点**（`docs/tech-debt-register.md`、`docs/real-device-verification.md` §10.6）：xserver 新增 `events/FocusEvent`、`FocusIn`（type=9）、`FocusOut`（type=10），`WindowManager.setFocus` / `revertFocus` 按 X11 核心协议按 common ancestor 分支投递（此前只改字段不下发事件）；`DesktopHelper.setFocusedWindow` 加 `isRenderable()` 兜底——原来只有 `isApplicationWindow()`（要求 WM_HINTS window group 等于自身 id 且名字非空）成立才设焦点，KiriKiri 窗口不满足，导致 `InputDeviceManager` 的按键入口因 `focusedWindow == null` 全部 return。真机 logcat 已证服务端下发焦点（`focus 0 -> 20971526` → `focus 20971526 -> 3`）；**端到端仍未证**（该标题起容器约 2 s 内 X 连接即被关）。
 - **TD-16 复测结论：原「分辨率相关」假设证伪**（`docs/tech-debt-register.md`、`docs/real-device-verification.md` §10.5）：1920x1080 容器同样复现「画面静止 + 全区域点击无响应」——启动后 15/35/55 s 三帧逐字节相同（1,423,039 B / MD5 `8AC36B25A1549114C60DFCDCE1AD710A`），`XServerDisplayActivity` 存活，`game.exe` CPU 4.9%；`wine_exec.log` 止于 `Direct3D 初期化...` → 20 s 后 `CPU clock : 2457.6MHz`。`input tap` / `input swipe` 150 ms / `input motionevent DOWN+UP` / `input keyevent 66` 四路注入零效果，但同一条注入能打开本 fork 抽屉菜单 ⇒ 卡在「到 Wine 客户程序」这一段（与 TD-13 同族）。`dxvk`↔`wined3d`、`turnip,gladio`↔`virgl,gladio`、`direct`↔`touchpad` 四轴 A/B 全为同签名；实验后容器配置已还原。**未偿**：按键不被消费的确切原因待用 `+event,+win` 日志对照注入落点。
 
 

@@ -1,5 +1,6 @@
 package com.winlator.xserver;
 
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.winlator.core.Bitmask;
@@ -13,6 +14,9 @@ import com.winlator.xserver.events.ConfigureRequest;
 import com.winlator.xserver.events.DestroyNotify;
 import com.winlator.xserver.events.Event;
 import com.winlator.xserver.events.Expose;
+import com.winlator.xserver.events.FocusEvent;
+import com.winlator.xserver.events.FocusIn;
+import com.winlator.xserver.events.FocusOut;
 import com.winlator.xserver.events.MapNotify;
 import com.winlator.xserver.events.MapRequest;
 import com.winlator.xserver.events.ResizeRequest;
@@ -133,6 +137,7 @@ public class WindowManager extends XResourceManager {
     }
 
     public void revertFocus() {
+        Window previousWindow = focusedWindow;
         switch (focusRevertTo) {
             case NONE:
                 focusedWindow = null;
@@ -144,11 +149,66 @@ public class WindowManager extends XResourceManager {
                 if (focusedWindow.getParent() != null) focusedWindow = focusedWindow.getParent();
                 break;
         }
+        notifyFocusChange(previousWindow, focusedWindow);
     }
 
     public void setFocus(Window focusedWindow, FocusRevertTo focusRevertTo) {
+        Window previousWindow = this.focusedWindow;
         this.focusedWindow = focusedWindow;
         this.focusRevertTo = focusRevertTo;
+        notifyFocusChange(previousWindow, focusedWindow);
+    }
+
+    /**
+     * 按 X11 核心协议下发 FocusOut / FocusIn（TD-13）。
+     *
+     * <p>协议要求：FocusOut 投给「失去焦点的窗口」和它的祖先，一路向上到共同祖先为止（不含）；
+     * FocusIn 投给「获得焦点的窗口」和它的祖先，从共同祖先往下（不含共同祖先）。只发给
+     * 在 {@link Event#FOCUS_CHANGE} 上选了事件的客户端。此前只改字段不发事件，Wine 因此
+     * 永远认为自己未聚焦，键事件到不了客户程序。
+     */
+    private void notifyFocusChange(Window previousWindow, Window newWindow) {
+        if (previousWindow == newWindow) return;
+
+        List<Window> previousPath = buildPathToRoot(previousWindow);
+        List<Window> newPath = buildPathToRoot(newWindow);
+
+        int commonLength = 0;
+        int maxCommon = Math.min(previousPath.size(), newPath.size());
+        while (commonLength < maxCommon && previousPath.get(commonLength) == newPath.get(commonLength)) commonLength++;
+
+        for (int i = previousPath.size() - 1; i >= commonLength; i--) {
+            Window window = previousPath.get(i);
+            window.sendEvent(Event.FOCUS_CHANGE, new FocusOut(focusDetail(window, false), FocusEvent.Mode.NORMAL, window));
+        }
+
+        for (int i = commonLength; i < newPath.size(); i++) {
+            Window window = newPath.get(i);
+            window.sendEvent(Event.FOCUS_CHANGE, new FocusIn(focusDetail(window, true), FocusEvent.Mode.NORMAL, window));
+        }
+
+        Log.d("XWindowFocus", "focus " + (previousWindow != null ? previousWindow.id : 0) + " -> "
+                + (newWindow != null ? newWindow.id : 0) + " (out " + (previousPath.size() - commonLength)
+                + ", in " + (newPath.size() - commonLength) + ")");
+    }
+
+    private List<Window> buildPathToRoot(Window window) {
+        List<Window> path = new ArrayList<>();
+        Window current = window;
+        while (current != null) {
+            path.add(0, current);
+            if (current == rootWindow) break;
+            current = current.getParent();
+        }
+        return path;
+    }
+
+    private FocusEvent.Detail focusDetail(Window window, boolean entering) {
+        if (window == null) return FocusEvent.Detail.NONE;
+        if (window == rootWindow) {
+            return focusRevertTo == FocusRevertTo.NONE ? FocusEvent.Detail.NONE : FocusEvent.Detail.POINTER_ROOT;
+        }
+        return FocusEvent.Detail.NONLINEAR;
     }
 
     public FocusRevertTo getFocusRevertTo() {
