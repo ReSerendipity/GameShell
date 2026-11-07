@@ -40,8 +40,9 @@ import java.util.concurrent.Executors;
  * <p><b>双数据源（2026-10-05）</b>：游戏库不再只有容器一种条目。Kirikiri / Ren'Py 这类
  * Route.B 原生游戏导入时不建容器（历史行为），由 {@link GalgameLibraryIndex} 单独记档，
  * 故 {@link Item#container} 允许为 null；工厂方法 {@link #fromContainer} / {@link #fromIndexEntry}
- * 统一负责构造，避免在 {@code GalgameHomeFragment} 与 {@code GalgameLibraryActivity}
- * 两处各写一遍、最终必然走样的字段拼装。
+ * 统一负责构造（TD-01 合并双 UI 后只有 {@code GalgameHomeFragment} 一个使用方；
+ * 当年是为了避免在 {@code GalgameHomeFragment} 与 {@code GalgameLibraryActivity}
+ * 两处各写一遍、最终必然走样的字段拼装）。
  */
 public final class GalgameLibraryAdapter extends BaseAdapter {
 

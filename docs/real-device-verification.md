@@ -497,6 +497,38 @@ I GalgameLibraryIndex: 索引对账：降级为原生 1 条，移出失效 1 条
 - 容器侧的重复没动：真机上 `files/rootfs/home/xuser` 与 `xuser-2` 都在用 `id=2` 且名字都是 `galgame-krkr_tobenai`，这是容器创建路径的遗留（对账按 gameId 集合处理，重复容器会被当成同一个游戏）。属另案。
 - 源目录判活是 `File.exists()`，依赖 `MANAGE_EXTERNAL_STORAGE`（本机 `appops get com.winlator MANAGE_EXTERNAL_STORAGE` = `allow`）；若该权限被收回，源在外置存储的原生条目会被判死——故移出的条目一律整条留档而不是丢弃。
 
+### 10.8 TD-01 合并双 UI / P8（2026-11-08 凌晨，设备 dc57ebe3）
+
+债项：`GalgameLibraryActivity` 与 `GalgameHomeFragment` 两份平行列表实现。验收口径（P8）：两条启动路径行为一致、库 UI 仅单一实现。
+
+**改动（6 个文件，净删约 500 行）**
+
+| 文件 | 改动 |
+|---|---|
+| `galgame/ui/GalgameLibraryActivity.java` | **删除**（19 KB 的第二套列表 + 动作菜单） |
+| `app/src/main/res/layout/activity_galgame_library.xml` | **删除**（只被上面那个 Activity 用） |
+| `GalgameLibraryActivity.java`（`com.winlator` 顶层，新建） | 宿主：`replace(android.R.id.content, new GalgameHomeFragment())` |
+| `ci/hotspot-entries.txt` | 追加宿主（galgame 子树门禁不许反向依赖顶层，宿主必须同批编译） |
+| `AndroidManifest.xml` / `GalgameSettingsActivity.java` | 活动类名改 `com.winlator.GalgameLibraryActivity`；「关于」弹窗补 `隐私说明` neutral 按钮（旧库页删掉后这里唯一入口） |
+| `app/src/debug/AndroidManifest.xml` | 仅 debug 把库入口放开 `exported`，供 adb 无头走查（release 不变） |
+
+**真机取证**（`am start -n com.winlator/com.winlator.GalgameLibraryActivity`，debug 包）
+
+- 宿主首屏与首页是同一套 UI：`GAMESHELL / 11.5`、`游戏库`、`LIBRARY / 全部作品 · 打开即玩`、`继续游玩`、`INDEX · 2`、`全部 / Unity / Kirikiri / 视觉小说` chip 行（`td01-host.xml`、`td01-host.png`）。
+- 点「椎名真穂のヒミツ」卡片 → `topResumedActivity=com.winlator/.GalgameDetailActivity`、`mCurrentFocus=...GalgameDetailActivity`，详情页里 `BTLaunch` / `BTDiagnose` / `BTCover` / `BTSaves` / `BTExport` 全在（旧库页动作菜单的能力没有丢）。
+- 设置 → 关于：弹窗三按钮「隐私说明 / 确定」，点「隐私说明」出现完整正文（`· 不收集、不上传任何个人数据或游戏文件；…`），旧库页独有的隐私声明已迁移到位（`td01-privacy.xml` / `td01-privacy.png`）。
+
+**门禁**
+
+```
+:app:compileDebugJavaWithJavac --offline        rc=0
+:app:assembleDebug -x lint --offline            rc=0
+ci/check-hotspot-sync.sh                        rc=0（清单 8 条、唯一来源、无硬编码副本）
+本地复刻 ci.yml galgame-compile 三步 javac       rc=0 / 0 / 0（桩 → galgame 全树 → 热点清单）
+```
+
+**边界**：两条旧入口（`MainActivity` 抽屉「游戏库」、`ContainersFragment` overflow）在旧壳里，活动都是 `exported=false`，无头点不进去；现在两者都 `startActivity(GalgameLibraryActivity.class)`，结构上必然一致，运行态只验到宿主本身。
+
 ## 11. 返回键 UX 与性能显示开关（2026-10-25 第四轮，设备 dc57ebe3）
 
 ### 11.1 现象取证（修复前，构建 6bd95bf）

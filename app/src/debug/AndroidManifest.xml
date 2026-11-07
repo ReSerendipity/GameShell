@@ -20,6 +20,11 @@
             tools:node="merge"
             tools:replace="android:exported" />
         <activity
+            android:name="com.winlator.GalgameLibraryActivity"
+            android:exported="true"
+            tools:node="merge"
+            tools:replace="android:exported" />
+        <activity
             android:name="org.tvp.kirikiri2.KR2Activity"
             android:exported="true"
             tools:node="merge"

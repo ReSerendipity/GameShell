@@ -176,8 +176,9 @@ python .workbuddy/verify/analyze_png.py C:/Users/Doro/Desktop/GameShell验证截
 
 - **外部播放器不纳入 `GameEngine`**：保持 `NativeRouteLauncher` 现状（已拍板）。若日后要统一，
   需要先解决「第三方 App 无运行时，可用性只能靠 `PackageManager` 探测」的语义问题。
-- **索引与容器是两套真值**：容器游戏以容器为准，索引只承担 override 与原生条目；
-  删除容器不会自动清索引条目（`containerized=true` 的条目不会重复出现在列表，影响可控）。
-- **`GalgameLibraryActivity` 与 `GalgameHomeFragment` 仍是两份平行实现**（历史遗留），
-  本轮已把条目构造与启动裁决抽到 `GalgameLibraryAdapter.fromContainer/fromIndexEntry` 与
-  `GameLauncher`，UI 侧只剩接线。彻底合并成一个 Fragment 不在本轮范围。
+- **索引与容器曾经是两套真值**（TD-03 已收口，2026-11-07 夜）：现在**容器列表是「有容器的游戏」的唯一真值**，
+  索引只承担原生条目与用户元数据（品类 / 标签 / 封面 / 运行方式 override），`containerized` 是派生缓存，
+  列表刷新时由 `GalgameLibraryIndex.loadReconciled()` 对账（容器没了但源还在 ⇒ 降级为原生；源也没了 ⇒ 移出并留档）。
+- **双 UI 已合并**（TD-01，2026-11-08 凌晨）：`GalgameHomeFragment` 是唯一实现，`GalgameLibraryActivity` 只剩宿主外壳
+  （把同一个 Fragment 装进 Activity，给旧入口保留类名）。条目构造仍在 `GalgameLibraryAdapter.fromContainer/fromIndexEntry`，
+  启动裁决仍在 `GameLauncher` / `GalgameLaunchHelper`。

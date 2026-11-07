@@ -91,7 +91,7 @@ public class ContainersFragment extends Fragment {
         }
         else if (menuItem.getItemId() == R.id.menu_item_galgame_library) {
             // GameShell 入口（新增价值层，不改动上游既有逻辑）
-            startActivity(new Intent(getContext(), com.winlator.galgame.ui.GalgameLibraryActivity.class));
+            startActivity(new Intent(getContext(), GalgameLibraryActivity.class));
             return true;
         }
         else return super.onOptionsItemSelected(menuItem);

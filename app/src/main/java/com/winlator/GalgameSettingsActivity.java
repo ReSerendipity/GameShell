@@ -140,6 +140,12 @@ public class GalgameSettingsActivity extends AppCompatActivity {
                                 + "快手  https://www.kuaishou.com/profile/3x2sk6hj48i2mhs\n"
                                 + "抖音  https://www.douyin.com/user/MS4wLjABAAAAcEdOoxVlfk3Ulx_usqR-3PHW4xxp6wYzRmsuRI_-fHBigPETTKLsv4fknIpFq6sP")
                         .setPositiveButton(R.string.galgame_ok, null)
+                        .setNeutralButton(R.string.galgame_privacy_title, (dialog, which) ->
+                                new AlertDialog.Builder(this)
+                                        .setTitle(R.string.galgame_privacy_title)
+                                        .setMessage(R.string.galgame_privacy_message)
+                                        .setPositiveButton(R.string.galgame_ok, null)
+                                        .show())
                         .show());
         SwitchCompat dev = findViewById(R.id.SWDevMode);
         boolean devOn = prefs.getBoolean("galgame_dev_mode", false);
