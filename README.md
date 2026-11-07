@@ -50,6 +50,8 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 > **导入流程**：选择文件夹 → 引擎识别 → 创建容器并注入区域/字体 → 封面墙入库 → 点按启动。全程向导对话框分步显示进度。
 
+> **KiriKiri 的启动对话框**：KiriKiri 每次启动会弹「窗口尺寸确认」，这是引擎/游戏侧不落盘的持久化行为（见 `docs/tech-debt-register.md` TD-15）。**请选不大于容器分辨率的一档**——容器是硬上限，超了会被算成裁切。首次手动点一次后本机会记住落点，下次同尺寸对话框自动跳过；对话框出现、且这台设备上还没有记录时，底部会提示本容器的推荐档位（由容器分辨率算出，容器之内最大档）。
+
 ![仓库架构](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
 
 > **仓库架构**：依据仓库真实目录结构绘制（main @ f466b3a），展示 `app/`、`ci/`、`docs/`、`tools/` 与内嵌 Winlator 组件的关系。

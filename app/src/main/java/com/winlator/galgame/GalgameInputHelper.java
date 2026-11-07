@@ -1,10 +1,13 @@
 package com.winlator.galgame;
 
+import android.content.Context;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.winlator.R;
 import com.winlator.container.Container;
 import com.winlator.galgame.widget.GalgameDirectTouchView;
 import com.winlator.xserver.XServer;
@@ -45,7 +48,8 @@ public final class GalgameInputHelper {
         attachedRef = new WeakReference<>(null);
         if (!GalgameLaunchHelper.isGalgameContainer(container)) return;
         // 启动对话框自动应答（教学-回放）：与触控模式无关（回放走注入 API），一律挂载
-        autoClick = GalgameDialogAutoClick.attach(xServer, container);
+        autoClick = GalgameDialogAutoClick.attach(xServer, container,
+                (width, height) -> showStartupDialogHint(rootView, container));
         if (!MODE_DIRECT.equals(container.getExtra(EXTRA_TOUCH_MODE, MODE_DIRECT))) return;
         GalgameDirectTouchView view = new GalgameDirectTouchView(rootView.getContext(), xServer);
         rootView.addView(view);
@@ -93,5 +97,21 @@ public final class GalgameInputHelper {
             }
         }
         return mode;
+    }
+
+    /**
+     * 启动期候选对话框出现、且该尺寸还没有教学点时提示一次（TD-15）。
+     *
+     * <p>只提示「该选哪档」，不代替用户点击：没有教学点一律不盲点，这是既有设计里的
+     * 零盲点约束。推荐值由 {@link StartupDialogGuide} 按容器分辨率算出（容器之内最大档）。
+     */
+    private static void showStartupDialogHint(View rootView, Container container) {
+        Context context = rootView.getContext();
+        if (context == null) return;
+        String recommended = StartupDialogGuide.describeRecommendation(
+                container.getScreenSize(), context.getString(R.string.galgame_startup_dialog_size_too_small));
+        Toast.makeText(context,
+                context.getString(R.string.galgame_startup_dialog_hint, container.getScreenSize(), recommended),
+                Toast.LENGTH_LONG).show();
     }
 }

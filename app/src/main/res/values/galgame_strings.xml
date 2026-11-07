@@ -291,4 +291,6 @@
     <string name="galgame_perf_proc_cpu">游戏进程 CPU</string>
     <string name="galgame_perf_net">网络上下行</string>
     <string name="galgame_perf_apply">应用</string>
+    <string name="galgame_startup_dialog_hint">启动对话框：建议选不大于容器分辨率的档（本容器 %1$s，推荐 %2$s）。点一次即记住，下次自动跳过。</string>
+    <string name="galgame_startup_dialog_size_too_small">容器装不下最小档</string>
 </resources>

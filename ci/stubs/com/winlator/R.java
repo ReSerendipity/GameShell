@@ -295,5 +295,7 @@ public final class R {
         public static final int galgame_window_fit_on = 120;
         public static final int galgame_window_fit_title = 121;
         public static final int removing_container = 122;
+        public static final int galgame_startup_dialog_hint = 901;
+        public static final int galgame_startup_dialog_size_too_small = 902;
     }
 }

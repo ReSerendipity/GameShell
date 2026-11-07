@@ -30,6 +30,14 @@ import com.winlator.xserver.XServer;
  * <p>接线：{@link GalgameInputHelper#attach} 注册（监听 X 窗口映射）；教学点采集在
  * {@link com.winlator.galgame.widget.GalgameDirectTouchView}（直接触控按下时）。
  * 非 galgame 容器不挂载，零上游改动。
+ *
+ * <p><b>2026-11-07 补（TD-15 收盘的两处缺口）</b>：① 回放只发一次点击，若引擎在对话框
+ * 完成首次绘制前就收到（或首点被自身遮罩吃掉），对话框会留在屏上导致「下次还得手点」——
+ * 现在每次回放后隔 {@link #REPLAY_RETRY_MS} 复查候选窗口是否仍映射，仍在该尺寸还有
+ * 回放额度就再发一次，最多 {@link #MAX_REPLAYS_PER_SESSION} 次。② 用户「不知道该选哪
+ * 档」这条文档侧无法解决（引擎不落盘），改为在**尚无教学点的候选对话框出现时提示一次**
+ * 推荐档位（{@link StartupDialogGuide} 算出「容器之内最大档」，见 {@link Guidance}），
+ * 提示只发一次、不拦点击，教完即静默。
  */
 public final class GalgameDialogAutoClick implements WindowManager.OnWindowModificationListener {
     private static final String TAG = "GalgameAutoClick";
@@ -43,28 +51,38 @@ public final class GalgameDialogAutoClick implements WindowManager.OnWindowModif
     private static final long REPLAY_DELAY_MS = 600;
     /** 按下保持时长：与直接触控层 MIN_CLICK_DURATION_MS 对齐，保证引擎识别为点击。 */
     private static final long REPLAY_HOLD_MS = 60;
+    /** 回放后的复查间隔：候选窗口还映射着就再补一次点击。 */
+    private static final long REPLAY_RETRY_MS = 1_500;
     /** 尺寸匹配容差（对话框每次由引擎绘制，同游戏可能有 ±几 px 抖动）。 */
     private static final int SIZE_TOLERANCE = 24;
-    /** 单次会话最多回放次数（多级对话框场景），防误点扩散。 */
+    /** 单次会话最多回放次数（多级对话框 + 复查补点），防误点扩散。 */
     private static final int MAX_REPLAYS_PER_SESSION = 3;
+
+    /** 发现「启动期候选对话框、但该尺寸还没有教学点」时的回调（只回调一次/会话）。 */
+    public interface Guidance {
+        void onStartupDialogWithoutTeaching(int width, int height);
+    }
 
     private final XServer xServer;
     private final Container container;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final long startedAt = SystemClock.uptimeMillis();
+    private final Guidance guidance;
 
     private Window candidate;
     private int replays = 0;
+    private boolean guided = false;
 
-    private GalgameDialogAutoClick(XServer xServer, Container container) {
+    private GalgameDialogAutoClick(XServer xServer, Container container, Guidance guidance) {
         this.xServer = xServer;
         this.container = container;
+        this.guidance = guidance;
     }
 
     /** galgame 容器挂载；其它容器返回 null（调用方不持有）。 */
-    static GalgameDialogAutoClick attach(XServer xServer, Container container) {
+    static GalgameDialogAutoClick attach(XServer xServer, Container container, Guidance guidance) {
         if (!GalgameLaunchHelper.isGalgameContainer(container)) return null;
-        GalgameDialogAutoClick tracker = new GalgameDialogAutoClick(xServer, container);
+        GalgameDialogAutoClick tracker = new GalgameDialogAutoClick(xServer, container, guidance);
         xServer.windowManager.addOnWindowModificationListener(tracker);
         return tracker;
     }
@@ -89,9 +107,25 @@ public final class GalgameDialogAutoClick implements WindowManager.OnWindowModif
         candidate = window;
 
         int[] taught = parse(container.getExtra(EXTRA_DIALOG_CLICK));
-        if (taught == null || replays >= MAX_REPLAYS_PER_SESSION) return;
-        if (Math.abs(taught[0] - w) > SIZE_TOLERANCE || Math.abs(taught[1] - h) > SIZE_TOLERANCE) return;
+        boolean sameSizeTrained = taught != null
+                && Math.abs(taught[0] - w) <= SIZE_TOLERANCE
+                && Math.abs(taught[1] - h) <= SIZE_TOLERANCE;
+        if (taught == null || !sameSizeTrained) {
+            // 没有可用教学点（含"教的是别的尺寸"）：只提示一次该选哪档，绝不盲点。
+            if (!guided && guidance != null) {
+                guided = true;
+                Log.d(TAG, "startup dialog without teaching point: " + w + "x" + h);
+                guidance.onStartupDialogWithoutTeaching(w, h);
+            }
+            return;
+        }
+        if (replays >= MAX_REPLAYS_PER_SESSION) return;
 
+        replay(window, taught);
+    }
+
+    /** 按教学点重放一次点击，并安排复查。 */
+    private void replay(final Window window, int[] taught) {
         replays++;
         final int x = window.getRootX() + taught[2];
         final int y = window.getRootY() + taught[3];
@@ -100,7 +134,23 @@ public final class GalgameDialogAutoClick implements WindowManager.OnWindowModif
             xServer.injectPointerButtonPress(Pointer.Button.BUTTON_LEFT);
             handler.postDelayed(() -> xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT), REPLAY_HOLD_MS);
         }, REPLAY_DELAY_MS);
-        Log.d(TAG, "replay dialog click at virtual (" + x + "," + y + ") for " + w + "x" + h);
+        Log.d(TAG, "replay dialog click at virtual (" + x + "," + y + ") for " + window.getWidth() + "x" + window.getHeight()
+                + " attempt " + replays);
+        handler.postDelayed(this::verifyDismissed, REPLAY_DELAY_MS + REPLAY_RETRY_MS);
+    }
+
+    /** 复查：候选窗口还映射着（对话框被首点漏掉）就按同一教学点再补一次。 */
+    private void verifyDismissed() {
+        Window still = candidate;
+        if (still == null) return;
+        if (SystemClock.uptimeMillis() - startedAt > ACTIVE_WINDOW_MS) return;
+        if (replays >= MAX_REPLAYS_PER_SESSION) return;
+        int[] taught = parse(container.getExtra(EXTRA_DIALOG_CLICK));
+        if (taught == null) return;
+        if (Math.abs(taught[0] - still.getWidth()) > SIZE_TOLERANCE
+                || Math.abs(taught[1] - still.getHeight()) > SIZE_TOLERANCE) return;
+        Log.d(TAG, "dialog still mapped after replay, retry");
+        replay(still, taught);
     }
 
     @Override

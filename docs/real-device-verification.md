@@ -391,6 +391,7 @@ YU-RIS / SystemNNN / ADVHD / BGI 无一通过。
   (803,491)`）。端到端「自动点掉对话框进主画面」因 TD-16（tobenai 挂起）未闭环，
   待首个可复现对话框样本。
 - 附带修复：S: 重定向目标目录自愈（appdata/roaming、local），icu 桩资产声明入 NOTICE。
+- **2026-11-07 补（TD-15 机制侧两处，见 tech-debt-register）**：回放加了「1.5 s 后复查、对话框还在就补点」（单会话最多 3 次）；新增「无教学点时提示一次推荐档位」（`StartupDialogGuide`，容器之内最大档）。本机验证到的是：debug 包装机后跑通一个真实 Wine 容器游戏（`XServerDisplayActivity` 正常、无 FATAL），以及推荐档位逻辑 22/22 断言全 PASS。**对话框本身没能在本机出现**——GameShell 库只剩 1 个 UNITY 标题，KiriKiri 样本未导入（SAF 选择器里按目录名翻找失败），所以本节原有的「教学 ✓ / 回放 ✓」记录仍是 2026-10-25 的真机结论，本轮没有把它往前推。
 
 ### 10.4 本轮回归
 
