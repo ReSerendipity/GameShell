@@ -529,6 +529,62 @@ ci/check-hotspot-sync.sh                        rc=0（清单 8 条、唯一来�
 
 **边界**：两条旧入口（`MainActivity` 抽屉「游戏库」、`ContainersFragment` overflow）在旧壳里，活动都是 `exported=false`，无头点不进去；现在两者都 `startActivity(GalgameLibraryActivity.class)`，结构上必然一致，运行态只验到宿主本身。
 
+### 10.9 TD-05 box64 构建端到端可复现（2026-11-08，设备 dc57ebe3）
+
+债项：`build_box64_android.sh` 端到端一次未跑通、链接三步是「手工步骤照抄」。这轮的验收口径是
+**一条命令从干净源码树产出可执行的 box64，并且能在本机 rootfs 上真的跑起来**，不是「能编完」。
+
+**改动（2 个脚本 + 1 个新脚本）**
+
+| 文件 | 改动 |
+|---|---|
+| `tools/box64/build_box64_android.sh` | 补 `winpath()`（传给 cmake/ninja/git 的路径统一盘符形式）、`export MSYS_NO_PATHCONV/MSYS2_ARG_CONV_EXCL`（否则 `--dynamic-linker=/data/...` 被改写）、ninja 探测 + `-DCMAKE_MAKE_PROGRAM`、脏树守卫放行「自产物 / 补丁已打上」、`GCC_RT` 取真 crt+libgcc（兜底 compiler-rt 打 warning）、`libgcc_s.a` 改空归档、先编 `mainobj` 再故意跑 `--target box64` 只为拿 `CMakeFiles/box64.rsp`、`PT_INTERP` 读字符串自检（不只看大小）、缺 zstd 时走 python `zstandard` 压 tar 流 |
+| `tools/box64/linkshim_glibc_atexit.c` | `__dso_handle` 改**弱定义**（真 crtbegin.o 在场时用它，避免 duplicate symbol） |
+| `tools/box64/fetch_gnu_sysroot.py` | **新增**：按 `--glibc` 选 Ubuntu ports 的 libc6/libc6-dev + Debian linux-libc-dev/libgcc-12-dev，解包后自动修 `lib/aarch64-linux-gnu` 与 `lib/ld-linux-aarch64.so.1`，带 8 项完整性自检 |
+
+**端到端取证（不是增量重跑，是新 clone + 新 sysroot）**
+
+```
+git clone --filter=blob:none https://github.com/ptitSeb/box64.git   → 工作树干净
+python tools/box64/fetch_gnu_sysroot.py --dest <ws>/sysroot-verify --glibc 2.39   → 8/8 OK
+BOX64_SRC=<新 clone> GLSYSROOT=<新 sysroot> bash tools/box64/build_box64_android.sh 2a062311 0.4.5-cleanroom
+  ↓ rc=0
+[432/432] 对象编完 → 对象清单 box64.rsp → crt/libgcc 取自 sysroot
+PT_INTERP bytes: 0x00003f  PT_INTERP = /data/data/com.winlator/files/rootfs/lib/ld-linux-aarch64.so.1
+产物 app/src/main/assets/box64/box64-0.4.5-cleanroom.tzst (3,811,623 B)
+```
+
+形态对比（`llvm-readelf`）：
+
+| 产物 | 大小 | 机器 | 基址 | INTERP |
+|---|---|---|---|---|
+| 本轮 `0.4.5-cleanroom` | 21,413,712 | AArch64 EXEC | `0x34800000` | `/data/data/…/rootfs/lib/ld-linux-aarch64.so.1` (63 B) |
+| 本轮 `0.4.5-r239` | 21,413,712 | AArch64 EXEC | `0x34800000` | 同上 |
+| 现役 `jniLibs/arm64-v8a/libbox64.so` | 21,412,896 | AArch64 | `0x34800000` | 同上 |
+| 官方 `box64-0.4.5.tzst` | 21,412,896 | AArch64 | `0x34800000` | 同上 |
+
+**真机执行**（本机 rootfs 是 glibc **2.39**，`files/rootfs/lib/libc.so.6` 自报 2.39，`libm.so.6` 的
+`GLIBC_*` 符号最高 2.39）：
+
+```
+run-as com.winlator sh -c "cd files && ./bx --version"
+Box64 arm64 v0.4.5 2a062311 with Dynarec built on Nov  8 2026 10:21:30
+rc=0
+```
+
+**反例（为什么不是「编出来就算」）**：第一版用 Debian sid 的 **2.44** sysroot，ELF 形态与上表完全一致
+（AArch64 / base `0x34800000` / INTERP 63 B），上机第一句就是
+`libm.so.6: version 'GLIBC_2.43' not found (required by ./box64-repro)`、
+`'GLIBC_2.44' not found`。**sysroot 版本 > rootfs 版本 = 形态对但跑不动**，这条已写进 chain §2。
+
+**边界**
+
+- 本轮没有把 `default.box64rc` / 应用运行态切到新产物（现役仍是 `box64-0.4.5.tzst`）；两份新产物
+  （`box64-0.4.5-r239.tzst` 3,810,328 B、`box64-0.4.5-cleanroom.tzst` 3,811,623 B）只作可复现证据留在
+  agent 工作区，**不入库**——`app/src/main/assets/**/*.tzst` 被 `.gitignore:27` 忽略，仓库里的 tzst 只有随包分发的三份。
+- 两次构建字节数相同但哈希不同（`SHA256 AAA561…` vs `8A32FA…`），差异只来自 `__DATE__/__TIME__` 的构建时间串，**未做 bit-for-bit 复现**（未引入 `SOURCE_DATE_EPOCH` 之类的可复现链接）。
+- 只用 `--version` 证明「能执行、能认基线」；没有用它跑真实 x86 程序（那需要容器级 wine 链路，属 TD-09/TD-13 的面）。
+
 ## 11. 返回键 UX 与性能显示开关（2026-10-25 第四轮，设备 dc57ebe3）
 
 ### 11.1 现象取证（修复前，构建 6bd95bf）

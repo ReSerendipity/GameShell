@@ -39,14 +39,41 @@ cmake -G Ninja -DARM_DYNAREC=ON -DBOX32=ON -DWINLATOR_GLIBC=ON -DCMAKE_BUILD_TYP
 # 关键：BOX32=ON（galgame exe 绝大多数是 32 位，走 WOW64）
 ```
 
-sysroot 的来源：Debian/Ubuntu arm64 的 `libc6` + `libc6-dev` 解包（`dpkg-deb -x`）后拼成
-`lib/` + `usr/{include,lib}`。此来源为事后追记，未逐字复现过，重建时以能链通为准。
+sysroot 的来源（**2026-11-08 已逐字复现并入库脚本**）：`tools/box64/fetch_gnu_sysroot.py`
+一件拉齐四包并修布局，不再手拼：
+
+```bash
+python tools/box64/fetch_gnu_sysroot.py --dest <sysroot> --glibc 2.39
+```
+
+| 组成 | 包（arm64） | 落到 sysroot 的位置 |
+|---|---|---|
+| 运行库 + 头 | `libc6_2.39-0ubuntu8.9` / `libc6-dev_2.39-0ubuntu8.9`（Ubuntu noble，**ports** 镜像） | `usr/lib/aarch64-linux-gnu/`、`usr/include/` |
+| kernel 头 | `linux-libc-dev_6.1.176-1`（Debian） | `usr/include/linux`、`usr/include/aarch64-linux-gnu/asm` |
+| crt + libgcc | `libgcc-12-dev_12.5.0-11`（Debian） | `usr/lib/gcc/aarch64-linux-gnu/12/{crtbegin.o,crtend.o,libgcc.a,libgcc_eh.a}` |
+
+布局两处必须修，否则链接脚本解析不到：`lib/aarch64-linux-gnu` 指到 `usr/lib/aarch64-linux-gnu`
+（Ubuntu 的 `libc.so` 是 `GROUP ( /lib/aarch64-linux-gnu/libc.so.6 … )`），
+`lib/ld-linux-aarch64.so.1` 单拷一份（`libc.so` 的 `AS_NEEDED(/lib/ld-linux-aarch64.so.1)` 引用它）。
+`usr/include` 顶层**没有** `asm/` 是正常的，clang 的多 arch 目录会命中 `aarch64-linux-gnu/asm`。
+
+**版本必须 ≤ 设备 rootfs 的 glibc**（本机 rootfs 是 2.39）。这条是 2026-11-08 真机踩出来的：
+先用了 Debian sid 的 2.44 sysroot，产物形态全对（AArch64 / base `0x34800000` / INTERP 63B），
+装到设备里第一句就是 `libm.so.6: version 'GLIBC_2.43' not found`、`'GLIBC_2.44' not found`。
+查 rootfs 版本：
+
+```bash
+adb shell "run-as com.winlator sh -c 'files/rootfs/lib/libc.so.6 | head -1'"   # 2.39
+```
 
 **链接期三处必坑（2026-10-23 实测，脚本已内置）**：
 
-1. sysroot 不带 gcc 的 `crtbegin.o`/`crtend.o`/`libgcc.a`。clang 对 `aarch64-linux-gnu`
-   是把 crt 对象按**裸文件名**交给 lld 的，`-L` 不生效 —— 必须把它们放进链接的工作目录。
-   `libgcc.a` 用 NDK 的 `libclang_rt.builtins.a` 顶替，`libgcc_s.a` 建空归档即可。
+1. **crt 对象与 libgcc**。clang 对 `aarch64-linux-gnu` 是把 `crtbegin.o`/`crtend.o`
+   按**裸文件名**交给 lld 的，`-L` 不生效 —— 必须把它们放进链接的工作目录。取真件（上面
+   `libgcc-12-dev` 解出来的），不要再拿空 `crtbegin.o` + compiler-rt 顶替：空 crt 会丢
+   `.init_array/.ctors`，构造器不跑，链得上但产物不可信。脚本的兜底分支打 warning，只用于调试。
+   `libgcc_s.a` 必须是**空归档**——曾把 `crtend.o` 塞进去，与真 `crtend.o` 撞
+   `.tm_clone_table` 的 `__TMC_END__`（duplicate symbol）。
 2. **rootfs 的 glibc 不导出 `atexit` / `pthread_atfork`**（3070 个动态符号里只有
    `__cxa_atexit` / `__register_atfork`），而 box64 main 自 2026-09 起在
    `core.c` / `custommem.c` / `signals.c` 里直接引用前者。用
@@ -59,6 +86,20 @@ sysroot 的来源：Debian/Ubuntu arm64 的 `libc6` + `libc6-dev` 解包（`dpkg
 
 前两条是历史上「手工补链接」的全部内容；第三条是 2026-10-23 重建时新踩出来的，
 只比对 ELF 段布局看不出来（EXEC/AArch64/base 0x34800000 全一致），必须读 INTERP 字符串。
+
+**2026-11-08 端到端跑通时补的四坑（脚本已内置，前三个都是「工具链层」而非配方层）**：
+
+4. **对象清单要靠 CMake 自己写**：只编 `mainobj` 不会产出 `CMakeFiles/box64.rsp`，手工链接就
+   报 `no such file or directory: '@CMakeFiles/box64.rsp'`。脚本先编 `mainobj`，再故意跑一次
+   `--target box64`（它会链接失败，但失败前已写好 rsp），校验 rsp 存在后才手工链。
+5. **Git Bash 会改写 `/data/...` 参数**：`-Wl,--dynamic-linker=/data/data/…` 被 MSYS 翻成
+   `C:/Program Files/Git/data/data/…`，产物 INTERP 直接废掉。脚本 `export MSYS_NO_PATHCONV=1
+   MSYS2_ARG_CONV_EXCL='*'`，并把传给 cmake/ninja/git 的路径统一成盘符形式（`/c/...` 它们不认）。
+6. **Windows 侧常常没有 `zstd` 命令行**：`tar --zstd` 报 `zstd: command not found`（本机就没有）。
+   脚本在缺 zstd 时用 python 的 `zstandard` 压同一个 tar 流（`tar -c | python`，
+   注意 `stream_writer` 必须 `close` 才写完帧尾，只 `flush` 会得到截断帧）。
+7. **重复跑会被自己的残留挡住**：脚本首跑会把私有补丁打进工作树、留下工具链文件与 build 目录。
+   守卫已放行「自产物 + 补丁已打上（能反向还原且改动文件数 == 补丁里的 diff 数）」两种情况。
 
 ### 基线与私有改动（2026-10-23 追记，补 TD-05）
 

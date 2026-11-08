@@ -13,7 +13,9 @@ extern int __cxa_atexit(void (*)(void), void *, void *);
 extern int __register_atfork(void (*)(void), void *, void (*)(void), void (*)(void), void *);
 
 extern void *__dso_handle __attribute__((visibility("hidden")));
-void *__dso_handle = (void *)&__dso_handle;
+/* 弱定义：sysroot 里有真 crtbegin.o 时用它的强符号（否则会和 crtstuff.c 撞
+ * duplicate symbol: __dso_handle）；只有退回空 crt 的调试链路才由这里兜住。 */
+void *__dso_handle __attribute__((weak)) = (void *)&__dso_handle;
 
 int atexit(void (*func)(void))
 {
