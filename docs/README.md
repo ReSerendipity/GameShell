@@ -28,12 +28,12 @@ GameShell（galgame 安卓运行器，内嵌 Winlator 源组件）的 docs/ 全�
 
 | 文档 | 内容 |
 |---|---|
-| [plan-engine-equivalence-ui.md](plan-engine-equivalence-ui.md) | 前置简报（2026-10-05 快照；两项任务均已落地，见下篇） |
+| [plan-engine-equivalence-ui.md](../_archive/执行记录/2026-11/plan-engine-equivalence-ui.md) | 前置简报（2026-10-05 快照；两项任务均已落地，见下篇） |
 | [engine-equivalence-ui-landed.md](engine-equivalence-ui-landed.md) | 引擎等价化 + UI 个性化落地记录：勘误、提交清单、真机复测手册 |
 | [native-engine-integration.md](native-engine-integration.md) | 原生引擎内嵌方案：Ren'Py / Kirikiroid2 端到端跑通的事实记录 |
 | [box64-wine-launch-chain.md](box64-wine-launch-chain.md) | box64 / wine 启动链修复记录：39-bit VA 设备六条件、DirectShow 挂起定位 |
 | [wine-dxwrapper-tuning.md](wine-dxwrapper-tuning.md) | Wine / dxwrapper 兼容性调优：任务背景、实施与真机取证 |
 | [fullscreen-fix-retrospective.md](fullscreen-fix-retrospective.md) | 全屏修复复盘（PR #36）：根因两层叠加与可复用判断 |
 | [real-device-verification.md](real-device-verification.md) | 真机验证报告（2026-10-22~24 三轮）：只写有证据的结论 |
-| [robustness-assessment-2026-10.md](robustness-assessment-2026-10.md) | 健壮性完整性评估（2026-10-26）：导入事故链、批量导入落地 |
+| [robustness-assessment-2026-10.md](../_archive/执行记录/2026-11/robustness-assessment-2026-10.md) | 健壮性完整性评估（2026-10-26）：导入事故链、批量导入落地 |
 | [save-recovery-drill.md](save-recovery-drill.md) | 存档备份/恢复演练记录（M10 止血）：自动备份调用点 + 导出→清空→恢复→校验 JVM 实测 |
