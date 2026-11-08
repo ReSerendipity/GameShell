@@ -194,6 +194,10 @@ winlator-glibc 自有格式，本仓安装链路不消费。
 
 ## 5. 后续（按收益排序）
 
+> **2026-11-08 复验后的优先级说明**：§3.3 把「wined3d 走不通」定量到了驱动供给层（GL 3.3 + 无
+> `libEGL.so.1` + 上下文创建不返回），因此下面第 1 条（第二个 Wine）仍是唯一可能翻盘的方向，
+> 第 2 条（补 GL 供给）已关闭且这次拿到了同源复验。第 3 条已完成（登记状态已改写）。
+
 1. **交叉编译 `brunodev85/wine-9.2-custom`（wow64）**，产出 `.tar.xz` 后走现有
    「设置 → 开发者模式 → 更多设置 → Wine 版本 → 安装」入口安装，再对 TD-09 样本（`yuris_lufia`/
    `sysnnn_sainogami`）做 A/B。届时在 `engine_presets.json` 的 `yrg`/`systemnnn` 上设
@@ -204,8 +208,9 @@ winlator-glibc 自有格式，本仓安装链路不消费。
    但仍无 `libEGL.so.1`，wined3d 连 adapter init 都未走到（GL 上下文建不起来，比 gladio 更差），
    画面与基线同黑（mean 0.11）。结合 §3.2 与 chain §7.4/§7.5：黑屏不随 d3d 包装、GL 供给、
    片头存在性三个轴变化，GL 供给线关闭。预设改动已回滚，未入库。
-3. 更新 TD-17（wined3d 变体已测：崩溃→引擎报错对话框，仍未可玩）与 TD-09（换 Wine 路线被
-   「需自建补丁 Wine」阻塞）的登记状态。
+3. ~~更新 TD-17（wined3d 变体已测：崩溃→引擎报错对话框，仍未可玩）与 TD-09（换 Wine 路线被
+   「需自建补丁 Wine」阻塞）的登记状态。~~ **已完成（2026-11-08，`fd445c9`）**：TD-17 与 TD-09 的
+   登记状态都已按最新实测改写；TD-17 的新失败签名（上下文挂死 / dxvk 静默退出）与定量根因见 §3.3。
 
 ## 6. 复跑命令
 
@@ -251,3 +256,15 @@ adb shell run-as com.winlator cat files/wine_exec.log   # guest 输出（Process
   （口径见 `real-device-verification.md` §5）。
 - 「Wine 版本 / 安装」入口在 release 上同样受「开发者模式」开关控制（设置页默认关），
   普通用户视图不受本轮改动影响。
+
+### 7.1 设备交接更新（2026-11-08）
+
+- 设备重新接线（`dc57ebe3`，状态 `device`），装的是 **debug 包 11.5**（`lastUpdate 2026-11-08 00:37`），
+  故 §7 里「release 包诊断面收窄、需先换 debug 包」这条前置已满足，导入/直启/`run-as` 三条通道都可用。
+- 现场状态：库里新增 `advhd_toran` 一条（`engine ADVHD / containerized true`），容器落在
+  `files/rootfs/home/xuser-3/.container`（**注意容器不在 `files/containers`**，`xuser` 是指向 `xuser-2` 的符号链接）；
+  `xuser-3/.wine` 里的 `d3d11.dll` 现为 Wine 内建 442,368 B（wined3d 态）。
+- **已还原**：`shared_prefs/com.winlator_preferences.xml` 的调试通道改回原值（取证期间的备份是
+  `prefs_backup.xml`）；留在设备上的只有样本、库条目与容器。
+- 证据留档（agent 工作区，不入库）：`advhd_wined3d_debug.log`（413,476 B，全 trace）、
+  `advhd_dxvk_seh.log`、`advhd_wined3d_force.log`（3,805 行）、三份容器配置 JSON。

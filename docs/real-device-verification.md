@@ -375,7 +375,7 @@ YU-RIS / SystemNNN / ADVHD / BGI 无一通过。
 | 游戏 | 修复前 | 根因（证据） | 修复 | 修复后 |
 |---|---|---|---|---|
 | `test_advhd`（リビドー・アバンちゅ～る） | 启动即退回库页 | exe 静态导入 icu.dll（仅用 uloc_getDefault），加载器 c0000135；补桩后可见 **Enigma Protector+PlayDRM** 双重商业保护，解壳后自主退出 | icu 桩注入（加载通过） | **仍不可玩**：DRM 行为，按 A5 不破解，登记为不可玩 |
-| `advhd_toran` | 启动即退回库页 | 同上 icu.dll 缺失；过加载关后再崩于 d2d1/DirectWrite（TD-17，上游 Wine 能力缺口） | 同上 | 引擎可加载、1280x720 窗口可建，渲染链崩（TD-17） |
+| `advhd_toran` | 启动即退回库页 | 同上 icu.dll 缺失；过加载关后再崩于 d2d1/DirectWrite（TD-17，上游 Wine 能力缺口） | 同上 | 引擎可加载、1280x720 窗口可建，渲染链崩（TD-17）。**2026-11-08 复验已改写此格：连窗口都不建，改停在 GL 上下文创建，见 §10.10** |
 | `bgi_ryo`（両腕が折れたので…） | 启动即退回库页（§7.4「未定」） | 非 ASCII 主程序路径在 wine 启动器**早期**（prefix 加载前、ACP 未初始化）被按 ANSI 解析为乱码宽字符 → 文件打不开（`+file,+nls` 取证：get_load_order 收到乱码名）。**双层真相**：当年验收脚本的转义确实也坏，两层都真 | `gs_launch.exe` ASCII 硬链接别名 + 启动改走别名 | **完整可玩**：进入游戏、满幅渲染 90.3%（含窗口铺满变换） |
 | `krkr_tobenai` | 流程挂起 | 480x280 主窗口映射后画面静止、点击全无响应；Decorated A/B 排除上轮修复副作用 | — | TD-16 独立排查中；**2026-11-07 复测**：1920x1080 容器同样复现（三帧逐字节相同、输入四路注入零效果、`game.exe` 存活 4.9% CPU），原「分辨率相关」假设证伪，详见 §10.5 |
 
@@ -584,6 +584,33 @@ rc=0
   agent 工作区，**不入库**——`app/src/main/assets/**/*.tzst` 被 `.gitignore:27` 忽略，仓库里的 tzst 只有随包分发的三份。
 - 两次构建字节数相同但哈希不同（`SHA256 AAA561…` vs `8A32FA…`），差异只来自 `__DATE__/__TIME__` 的构建时间串，**未做 bit-for-bit 复现**（未引入 `SOURCE_DATE_EPOCH` 之类的可复现链接）。
 - 只用 `--version` 证明「能执行、能认基线」；没有用它跑真实 x86 程序（那需要容器级 wine 链路，属 TD-09/TD-13 的面）。
+
+### 10.10 TD-17 AdvHD 复验（2026-11-08，设备 dc57ebe3）
+
+**取景**：设备重新接线（`dc57ebe3`，RMX5010 / Adreno 830 / Android 16 / GLES 3.2），重装 debug 包
+`versionName 11.5`（`flags=[DEBUGGABLE]`，`lastUpdate 2026-11-08 00:37`），样本沿用 §10.2 的
+`advhd_toran`（`/sdcard/Download/advhd_toran`，87 文件）。导入与直启都走既有入口，未改业务代码。
+
+**做法**：要 guest 侧真因，先把 `enable_wine_debug` 置真、`wine_debug_channels` 置
+`warn,err,fixme,seh,d3d,d3d11,d2d,dwrite,winediag`（改的是 App 私有 `shared_prefs`，**测完已还原**），
+再 `run-as com.winlator cat files/wine_exec.log` 取日志；截图量化沿用 §7.1 口径（`resize((160,72))` →
+`convert('L')` → mean / nonblack%）。
+
+| 后端 | 落地证据 | 结果 |
+|---|---|---|
+| `wined3d`（预设原值） | `err:wgl:egl_init Failed to load libEGL.so.1`；`GL_RENDERER "Gladio"`、`GL_VERSION "3.3"`；`Selected feature level WINED3D_FEATURE_LEVEL_9_3`；日志终止于 `wined3d_context_gl_enter Entering context …, level 1` | 上下文不返回：`Found iPixelFormat=1` 之后无任何后续行，`AdvHD.exe` 进程仍在（R 态），应用**永久停在启动页**（mean 4.62 / nonblack 2.95%）。两次独立复跑一致 |
+| `dxvk`（对照组） | `system32/d3d11.dll` = 4,055,054 B、`d3d9.dll` = 3,743,758 B（内建 442,368 B）⇒ 换装成功；但日志**零行 DXVK 输出** | 未创建 D3D11 设备；`dwrite:process_attach` 与 `RoGetActivationFactory(L"Windows.UI.ViewManagement.UISettings")` 半桩之后连续 `seh:__processing_throw`，随后**静默退出**、退回库页（mean 218.24 / nonblack 98.76%） |
+
+**与 §10.2 的差异**：§10.2 记的是 10-25/10-26 的状态（「窗口可建、渲染链崩」）。2026-11-08 同一预设、
+同一 `turnip,gladio`、同一 Wine 10.10 下**连窗口都不建了**——差在驱动供给层（GladIO 现报 GL 3.3、
+`usr/lib` 无 `libEGL*`），不是游戏文件、也不是容器配置。
+
+**判据（可复跑）**：`docs/wine-dxwrapper-tuning.md` §3.3 有完整证据表与复现命令；判断「后端是否真落地」
+最硬的判据是 `drive_c/windows/system32/d3d11.dll` 的字节数（内建 442,368 B / DXVK 4,055,054 B）。
+
+**边界**：两条后端各跑 1–2 次，另加一次「缓存串反证」（手改容器后 dll 未替换，见 tuning §3.3 与
+`local/agents/GOTCHAS.md` #9）。没有改预设、没有换 GL 供给、没有做 `glXMakeCurrent` 超时回退。
+TD-17 仍未偿还，三项未偿登记在 `tech-debt-register.md`。
 
 ## 11. 返回键 UX 与性能显示开关（2026-10-25 第四轮，设备 dc57ebe3）
 
