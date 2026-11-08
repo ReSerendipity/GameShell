@@ -57,7 +57,7 @@
 | unity | dxvk（不变） | — | ✅ 可玩 ×3；现代 3D，DXVK 正确 |
 | bgi | dxvk（不变） | — | ✅ 可玩 90.3%（§10.2）；见 §2.1 更正 1 |
 | unknown | dxvk（不变） | — | 通用兜底，可能是现代 3D |
-| **advhd** | **wined3d** | — | ❌ TD-17；登记时点名 wined3d 可试。它是 d3d11/d2d1 而非 ddraw，故不配 cnc-ddraw |
+| **advhd** | **wined3d** | — | ❌ TD-17；登记时点名 wined3d 可试。它是 d3d11/d2d1 而非 ddraw，故不配 cnc-ddraw。**该依据 2026-11-08 已失效（同一组合退化为 GL 上下文挂死），见 §3.3** |
 | **yrg**（YU-RIS） | **wined3d** | **cnc-ddraw** | ❌ TD-09 全黑；DDraw 时代引擎 |
 | **systemnnn** | **wined3d** | **cnc-ddraw** | ❌ TD-09 全黑；DDraw 时代引擎 |
 | **artemis** | **wined3d** | **cnc-ddraw** | ⬜ 无样本未测；预设本就 winxp + `MESA_EXTENSION_MAX_YEAR=2003` |
@@ -82,6 +82,48 @@ icu 桩注入，`GalgameLaunchHelper.java:174-175`）启动；截图按亮度均
 
 未覆盖格子（如实声明）：`artemis`/`cat_system2`/`cmvs` 设备无样本，未验证；
 YU-RIS/SystemNNN 的 wined3d 收益被 TD-09 遮蔽，**无法判定**；AdvHD 点 OK 之后止于引擎报错。
+
+### 3.3 真机复验（2026-11-08）：§3.2 的「有窗口」结论在当前构建下已反转
+
+§3.2 的取景条件是 **2026-10-26 的构建 + 当时的图形驱动组合**。2026-11-08 在同一台设备
+（`dc57ebe3`，realme RMX5010 / Adreno 830）、同一台机上的 debug 包（`versionName 11.5`、
+`flags=[DEBUGGABLE]`）、同一 `turnip,gladio`（turnip 26.2.0 / gladio 1.1）、同一 Wine 10.10 上
+重跑 advhd 预设，**失败模式已不是登记时的样子**。
+
+复现方法（全部走仓内既有入口，未改业务代码）：真机导入
+（`am start -n com.winlator/.GalgameImportActivity --es galgame.path /sdcard/Download/advhd_toran --ez galgame.auto true`，
+日志 `import(31265): engine=ADVHD route=A files=87`，落到容器 `galgame-advhd_toran`，`dxwrapper=wined3d`），
+再经 `GalgameDetailActivity` + `galgame.auto_launch` 启动；为拿到 guest 侧真因，把
+`enable_wine_debug` 置真、`wine_debug_channels` 置 `warn,err,fixme,seh,d3d,d3d11,d2d,dwrite,winediag`
+（改的是 App 私有 `shared_prefs`，测完已还原），随后读 `run-as com.winlator cat files/wine_exec.log`。
+
+| 后端 | 落地证据（本次实测） | 结果 |
+|---|---|---|
+| **wined3d**（预设原值） | `wined3d_dll_init … Using the OpenGL renderer`；`GL_RENDERER "Gladio"`、`GL_VERSION "3.3"`；`wined3d_state_create Selected feature level WINED3D_FEATURE_LEVEL_9_3`；`err:wgl:egl_init Failed to load libEGL.so.1`；日志终止于 `00cc:wined3d_context_gl_enter Entering context …, level 1` | 上下文建不起来：日志停在 `Found iPixelFormat=1` 之后不再推进，`AdvHD.exe` 进程仍在（R 态），应用**永久停在启动页**（截图 mean=4.62 / nonblack=2.95%）。两次独立复跑一致 |
+| **dxvk**（把容器改回 dxvk 后） | `system32/d3d11.dll` = 4,055,054 B、`d3d9.dll` = 3,743,758 B（内建为 442,368 B）⇒ DXVK 已落地；但 `wine_exec.log` 内**没有一行 DXVK 日志** | 游戏在 `dwrite:process_attach` 与 `RoGetActivationFactory(L"Windows.UI.ViewManagement.UISettings")` 半桩之后连续 `seh:__processing_throw`，随后**静默退出**、应用退回库页（mean=218.24 / nonblack=98.76%） |
+
+**根因分层（本次取证，非推断）**
+
+1. **GL 供给封顶**：唯一可用的桌面 GL 来自 GladIO 1.1，自报 `GL_VERSION 3.3`；wined3d 据此只给
+   `FL9_3`。AdvHD 是 32 位、静态导入 `d3d11/d2d1/DirectWrite`、样本含 `DX11Effect.arc` 的 D3D11 引擎，
+   需要 ≥FL10 → 即便上下文建起来也过不了 D3D 初始化。
+2. **EGL 缺件**：`usr/lib` 里只有 `libGL.so.1` 与 `libvulkan*`，**没有 `libEGL.so.1`**；
+   `err:wgl:egl_init` 与 box64 的 `Error initializing native libEGL.so.1` 同源。这与 §5.2 关掉的
+   zink 供给线是同一个缺件，不是新问题。
+3. **上下文挂死（新现象）**：`wined3d_context_gl_enter` 不返回 —— GLX 选格式成功（`iPixelFormat=1`）
+   之后 `MakeCurrent` 就没回来。这就是「应用停在启动页」的真因：不是游戏慢，是 guest 线程死在 GL 调用里。
+   与 §3.2 的「有窗口 + 起動チェック对话框」差的是驱动供给这一层，不是游戏文件。
+4. **dxvk 侧**：d3d11 已是 DXVK 且确实落地，但游戏在 d2d1/DirectWrite/WinRT `UISettings` 半桩阶段抛异常
+   退出，**没走到 D3D11 设备创建**（所以连 DXVK 版本行都没打）。dxvk 这条路的挡路者不是 DXVK，是 Wine 的 d2d1/WinRT 桩。
+
+**结论（不粉饰）**：TD-17 仍**未偿还**，且失败签名比登记时更差（「有窗口 + 引擎报错」→「上下文挂死 / 静默退出」）。
+`advhd → wined3d` 这条预设依据已失效；但改回 `dxvk` 只是把「挂死」换成「静默退出」，两者都不可玩，
+故本次**不动预设**，把选择留给下一条可行供给（§5 第 1 条的第二个 Wine 仍是最可能翻盘的一条，
+但同样卡在自建 Wine 不可行）。
+
+**这次没做的事（如实声明）**：没换 GL 供给组合（zink 线已在 §5.2 关闭、virgl 需 host 侧 server）、
+没试 `windows_version` 之类配置项、没做 `glXMakeCurrent` 前的超时回退。上述任一都需要新的驱动供给或新的
+上游补丁，属于下一个独立任务的量级。
 
 ## 4. 任务一：第二个 Wine + 按引擎切换
 
