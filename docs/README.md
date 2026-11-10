@@ -3,6 +3,7 @@
 > 治理规范：[ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
 GameShell（galgame 安卓运行器，内嵌 Winlator 源组件）的 docs/ 全量索引。
+全量逐文件清单（含路径 / 用途 / 状态 / 核对日期 2026-11-10）见 [`INDEX.md`](INDEX.md)；两者冲突时以 `INDEX.md` 为准。
 总入口见根 [README.md](../README.md)；CI 内部约定在 [`ci/README.md`](../ci/README.md)，
 上游组件零改例外与冲突面清单在 [`ci/zero-mod-exceptions.md`](../ci/zero-mod-exceptions.md)。
 
