@@ -52,7 +52,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 > **KiriKiri 的启动对话框**：KiriKiri 每次启动会弹「窗口尺寸确认」，这是引擎/游戏侧不落盘的持久化行为（见 `docs/tech-debt-register.md` TD-15）。**请选不大于容器分辨率的一档**——容器是硬上限，超了会被算成裁切。首次手动点一次后本机会记住落点，下次同尺寸对话框自动跳过；对话框出现、且这台设备上还没有记录时，底部会提示本容器的推荐档位（由容器分辨率算出，容器之内最大档）。
 
-![仓库架构](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
+![仓库架构](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture-20261112.svg)
 
 > **仓库架构**：依据仓库真实目录结构绘制，展示 `app/`、`ci/`、`docs/`、`tools/` 与内嵌 Winlator 组件的关系。
 
@@ -212,7 +212,7 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 > **Import flow**: Pick folder → detect engine → create container and inject locale/fonts → appear in cover wall → tap to launch. Progress is shown step by step in a wizard dialog.
 
-![Repository architecture](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture.svg)
+![Repository architecture](https://gcore.jsdelivr.net/gh/ReSerendipity/GameShell@main/docs/assets/architecture-20261112.svg)
 
 > **Repository architecture**: Drawn from the actual directory tree, showing `app/`, `ci/`, `docs/`, `tools/`, and the embedded Winlator component.
 

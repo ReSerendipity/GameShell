@@ -63,7 +63,7 @@
 
 | 项 | 用途 | 状态 | 核对日期 |
 |---|---|---|---|
-| `assets/` | README 展示图与架构图（`architecture.svg`、`readme-galgameshell-*`，无 Markdown） | 现行 | 2026-11-10 |
+| `assets/` | README 展示图与架构图（`architecture-20261112.svg`、`readme-galgameshell-*`，无 Markdown） | 现行 | 2026-11-12 |
 | `icon/` | 启动图标快照：`ic_launcher-512.png` + [`export-snapshot-index.md`](icon/export-snapshot-index.md)（2026-11-10 复核：两文件均已入库，`git status` 无未跟踪项） | 现行 | 2026-11-10 |
 
 ## 六、docs/ 之外的同体系文档
