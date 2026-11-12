@@ -88,7 +88,11 @@ service-account.json
 AGENTS.md
 
 # 仅本地容器：内部说明、agent 上下文、实验记录、纯历史（§13.1）；docs/ 为纯入库目录
-/local/
+/local/*
+!/local/agents/
+/local/agents/*
+!/local/agents/GOTCHAS.md
+!/local/agents/REVISION_LOG.md
 
 # release 签名参数（2026-11-05 整改：私钥/参数永不入库）
 /keystore.properties
