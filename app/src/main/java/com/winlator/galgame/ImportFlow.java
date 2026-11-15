@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.winlator.container.Container;
 import com.winlator.container.ContainerManager;
+import com.winlator.container.DXWrappers;
 import com.winlator.core.WineInfo;
 import com.winlator.xenvironment.RootFS;
 
@@ -22,7 +23,12 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * P1 导入即玩核心（Plan Part VIII §VIII.3 / A2+A3 / B4 / A5）。
@@ -194,6 +200,10 @@ public final class ImportFlow {
         }
 
         // 写 galgame_overlay.json（不修改官方 .container，供前端/启动器读取）
+        // P0-3：每游戏修复（数据层）——只改 fix 声明过的键，旧值留档可回滚
+        result.fixPlan = applyGameFixes(container, result, context);
+        // P0-2：运行时依赖侦测（只读、不安装）；结果随 overlay 落盘，诊断页可见
+        result.redistReport = detectRedist(context, gameDir, result.gameExe);
         writeOverlay(root, result, gameDir);
 
         return gameDir;
@@ -621,11 +631,203 @@ public final class ImportFlow {
                 }
                 o.put("locale_injection", loc);
             }
+
+            // P0-3：已落地的每游戏修复（字段级）；预览文本与明细一起冗余，诊断可自证
+            if (result.fixApplied != null && result.fixApplied.length() > 0) {
+                o.put("fixes_applied", result.fixApplied);
+                if (result.fixPreview != null && !result.fixPreview.isEmpty()) {
+                    o.put("fixes_preview", result.fixPreview);
+                }
+            }
+
+            // P0-2：运行时依赖侦测结果（只读证据 + 我方是否有组件包），不触发任何安装
+            if (result.redistReport != null && !result.redistReport.isEmpty()) {
+                JSONArray arr = new JSONArray();
+                for (GalgameRedistDetector.Finding f : result.redistReport.findings) {
+                    JSONObject one = new JSONObject();
+                    one.put("component", f.component);
+                    one.put("label", f.label);
+                    one.put("kind", f.kind);
+                    one.put("evidence", f.evidence);
+                    one.put("available", f.available);
+                    arr.put(one);
+                }
+                o.put("redist_recommend", arr);
+                if (result.redistReport.truncated) o.put("redist_truncated", true);
+            }
+
             File f = new File(root, "galgame_overlay.json");
             try (Writer w = new java.io.FileWriter(f)) { w.write(o.toString(2)); }
         } catch (Exception ignored) {
             // 覆盖文件写入失败不阻断导入
         }
+    }
+
+    // ---- P0-3：每游戏修复数据层（apply / preview / revert）----
+
+    /** 读 assets 纯文本（缺失返回空串）。 */
+    static String readAssetsText(Context context, String name) {
+        if (context == null) return "";
+        try (InputStream in = context.getAssets().open(name)) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[1 << 14];
+            int n;
+            while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+            return new String(bos.toByteArray(), StandardCharsets.UTF_8);
+        }
+        catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static Map<String, String> currentFixValues(Container container) {
+        Map<String, String> cur = new LinkedHashMap<>();
+        if (container == null) return cur;
+        cur.put("dxwrapper", container.getDXWrapper());
+        cur.put("dxwrapper_config", container.getDXWrapperConfig());
+        cur.put("wincomponents", container.getWinComponents());
+        cur.put("env", container.getEnvVars());
+        cur.put("windows_version", container.getExtra("windows_version", ""));
+        cur.put("screen_size", container.getScreenSize());
+        cur.put("box64_preset", container.getBox64Preset());
+        return cur;
+    }
+
+    /**
+     * 计算本游戏将会应用的修复（预览用，不写任何配置）。
+     * 详情页/诊断页可调 {@link #previewGameFixes} 直接把结果展示给用户。
+     */
+    public static GalgameFixRegistry.Plan planGameFixes(Context context, Container container,
+                                                        String engine, String exeName) {
+        if (context == null || container == null) return new GalgameFixRegistry.Plan();
+        String conf = readAssetsText(context, "galgame_fixes.conf");
+        return GalgameFixRegistry.resolve(conf, engine, exeName,
+                container.getWineVersion(), currentFixValues(container));
+    }
+
+    /** 预览文本：一行一个「字段: 旧 → 新 [fix-id]」。 */
+    public static String previewGameFixes(Context context, Container container,
+                                          String engine, String exeName) {
+        return planGameFixes(context, container, engine, exeName).preview();
+    }
+
+    /**
+     * 落地修复：只写 fix 声明过的键；写前把旧值存进 {@code galgame_fixes_prev}，
+     * 供 {@link #revertGameFixes} 回滚。无效值（如 dxwrapper 非 wined3d/dxvk）跳过不写。
+     */
+    static GalgameFixRegistry.Plan applyGameFixes(Container container, ImportResult result,
+                                                  Context context) {
+        if (container == null || result == null || result.engine == null) return null;
+
+        String exeName = result.gameExe != null ? result.gameExe.getName() : "";
+        GalgameFixRegistry.Plan plan = planGameFixes(context, container, result.engine.name(), exeName);
+        if (plan == null || plan.isEmpty()) return plan;
+
+        JSONObject prev = new JSONObject();
+        JSONArray applied = new JSONArray();
+        for (GalgameFixRegistry.Change c : plan.changes) {
+            // dxwrapper 只接受官方 parseIdentifier 认的两值，写别的等于没写
+            if ("dxwrapper".equals(c.field)
+                    && !DXWrappers.WINED3D.equals(c.to) && !DXWrappers.DXVK.equals(c.to)) {
+                continue;
+            }
+
+            try {
+                switch (c.field) {
+                    case "dxwrapper":        container.setDXWrapper(c.to); break;
+                    case "dxwrapper_config": container.setDXWrapperConfig(c.to); break;
+                    case "wincomponents":    container.setWinComponents(c.to); break;
+                    case "env":              container.setEnvVars(c.to); break;
+                    case "windows_version":  container.putExtra("windows_version", c.to); break;
+                    case "screen_size":      container.setScreenSize(c.to); break;
+                    case "box64_preset":     container.setBox64Preset(c.to); break;
+                    default: continue;
+                }
+
+                prev.put(c.field, c.from == null ? JSONObject.NULL : c.from);
+                JSONObject one = new JSONObject();
+                one.put("fix", c.fixId);
+                one.put("field", c.field);
+                one.put("from", c.from == null ? JSONObject.NULL : c.from);
+                one.put("to", c.to);
+                applied.put(one);
+            }
+            catch (Exception ignored) {
+                // 单字段失败不拖累其它字段
+            }
+        }
+
+        if (applied.length() == 0) return plan;
+
+        container.putExtra("galgame_fixes_prev", prev);
+        container.putExtra("galgame_fixes_applied", applied);
+        container.saveData();
+
+        result.fixApplied = applied;
+        result.fixPreview = plan.preview();
+        return plan;
+    }
+
+    /**
+     * 回滚 {@link #applyGameFixes} 写入的全部字段，并清掉留档。
+     * 只恢复当时存过的键，不触碰用户后来手改的其它配置。
+     */
+    public static boolean revertGameFixes(Container container) {
+        if (container == null) return false;
+        String raw = container.getExtra("galgame_fixes_prev", "");
+        if (raw.isEmpty()) return false;
+
+        try {
+            JSONObject prev = new JSONObject(raw);
+            Iterator<String> keys = prev.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                if (prev.isNull(key)) {
+                    // 原来就不存在（目前只有 windows_version 可能为空）
+                    if ("windows_version".equals(key)) container.putExtra(key, null);
+                    continue;
+                }
+                String val = prev.getString(key);
+                switch (key) {
+                    case "dxwrapper":        container.setDXWrapper(val); break;
+                    case "dxwrapper_config": container.setDXWrapperConfig(val); break;
+                    case "wincomponents":    container.setWinComponents(val); break;
+                    case "env":              container.setEnvVars(val); break;
+                    case "windows_version":  container.putExtra("windows_version", val); break;
+                    case "screen_size":      container.setScreenSize(val); break;
+                    case "box64_preset":     container.setBox64Preset(val); break;
+                    default: break;
+                }
+            }
+            container.putExtra("galgame_fixes_prev", null);
+            container.putExtra("galgame_fixes_applied", null);
+            container.saveData();
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
+    // ---- P0-2：运行时依赖侦测（只读） ----
+
+    /**
+     * 扫游戏目录与主 exe 导入表，产出「需要哪些运行时组件 + 我方有没有对应组件包」。
+     * 本方法不下载、不安装、不改 prefix —— 安装部分本批明确未实施。
+     */
+    static GalgameRedistDetector.Result detectRedist(Context context, File gameDir, File exe) {
+        Set<String> available = new HashSet<>();
+        if (context != null) {
+            try {
+                JSONObject catalog = readAssetsJson(context, "wincomponents/wincomponents.json");
+                Iterator<String> it = catalog.keys();
+                while (it.hasNext()) available.add(it.next());
+            }
+            catch (Exception ignored) {
+                // 目录缺失不阻断侦测：全部按「无组件包」标记
+            }
+        }
+        return GalgameRedistDetector.detect(gameDir, exe, available);
     }
 
     /** 导入结果。A 路由含 {@link #containerData}（交给 ContainerManager）；B 路由含 {@link #nativePlayer}。 */
@@ -644,5 +846,13 @@ public final class ImportFlow {
         public File saveDir;            // S: 盘路径（A 路由）
         public File gameExe;            // 启动用 exe（stageGameFiles 后填）
         public GalgameLocaleInjector.Report localeReport; // P2 日文化注入结果（stageGameFiles 后填）
+        /** P0-3：本次命中的修复计划（apply 前的预览/明细）。 */
+        public GalgameFixRegistry.Plan fixPlan;
+        /** P0-3：本次实际落地的字段级修复（写进 overlay.fixes_applied）。 */
+        public org.json.JSONArray fixApplied;
+        /** P0-3：修复预览文本（与 fixApplied 同源，避免预览与实际漂移）。 */
+        public String fixPreview;
+        /** P0-2：运行时依赖侦测结果（只读，不含安装）。 */
+        public GalgameRedistDetector.Result redistReport;
     }
 }
