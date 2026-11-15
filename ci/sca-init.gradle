@@ -53,6 +53,12 @@ allprojects {
                 datafeedUrl = 'https://nvd.nist.gov/feeds/json/cve/2.0/nvdcve-2.0-{0}.json.gz'
             }
         }
-        // 已知误报在跑出首轮报告后按官方 suppressionFile 机制补录（先保持零豁免）。
+        // 只扫真正会进包的类路径。AGP 的 `_internal-unified-test-platform-*` 是
+        // instrumentation 测试跑端（ddmlib / emulator-control / result-listener 等）的
+        // 构建期 classpath，里面的 netty / grpc / protobuf / guava 永远不会打进 APK；
+        // 把它们算进 SCA 只会拿构建工具的 CVE 把门禁刷红（2026-11-15 报告已取证）。
+        scanConfigurations = ['releaseRuntimeClasspath']
+        // 已知误报按官方 suppression XML 逐条登记（每条都带证据与复核到期日）。
+        suppressionFile = rootProject.file('ci/sca-suppressions.xml').absolutePath
     }
 }
