@@ -1054,12 +1054,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         try {
             JSONObject wincomponentsJSONObject = new JSONObject(FileUtils.readString(this, "wincomponents/wincomponents.json"));
-            Iterator<String[]> oldWinComponentsIter = new KeyValueSet(container.getExtra("wincomponents", Container.FALLBACK_WINCOMPONENTS)).iterator();
+            KeyValueSet oldWinComponents = new KeyValueSet(container.getExtra("wincomponents", Container.FALLBACK_WINCOMPONENTS));
             ArrayList<String> builtinDlls = new ArrayList<>();
 
             for (String[] wincomponent : new KeyValueSet(wincomponents)) {
-                if (wincomponent[1].equals(oldWinComponentsIter.next()[1])) continue;
                 String identifier = wincomponent[0];
+                // 按 key 比较，避免新增组件（如 vcrun2019）时旧配置缺键导致按位置比较错位。
+                String oldValue = oldWinComponents.get(identifier, null);
+                if (oldValue != null && wincomponent[1].equals(oldValue)) continue;
                 boolean useNative = wincomponent[1].equals("1");
 
                 if (useNative) {

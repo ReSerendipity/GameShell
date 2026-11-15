@@ -92,8 +92,8 @@ public final class P0Test {
         check("env no-op keeps original", "A=1".equals(GalgameFixRegistry.appendEnv("A=1", "A=1")));
 
         check("wincomponents updates declared key",
-                "direct3d=1,vcrun2010=1,vcrun2015=1".equals(
-                        GalgameFixRegistry.mergeKeyValueCsv("direct3d=1,vcrun2010=0", "vcrun2010=1,vcrun2015=1")));
+                "direct3d=1,vcrun2010=1,vcrun2019=1".equals(
+                        GalgameFixRegistry.mergeKeyValueCsv("direct3d=1,vcrun2010=0", "vcrun2010=1,vcrun2019=1")));
         check("wincomponents keeps others",
                 "A=1,B=2".equals(GalgameFixRegistry.mergeKeyValueCsv("A=1", "B=2")));
     }
@@ -119,10 +119,10 @@ public final class P0Test {
         boolean found2010 = false;
         boolean foundOal = false;
         for (GalgameRedistDetector.Finding f : r.findings) {
-            if ("vcrun2015".equals(f.component)) {
+            if ("vcrun2019".equals(f.component)) {
                 foundVc = true;
-                check("vcrun2015 not available", !f.available);
-                check("vcrun2015 bundled kind", "BUNDLED".equals(f.kind));
+                check("vcrun2019 not available in synthetic set", !f.available);
+                check("vcrun2019 bundled kind", "BUNDLED".equals(f.kind));
             }
             if ("vcrun2010".equals(f.component)) {
                 found2010 = true;
@@ -142,13 +142,13 @@ public final class P0Test {
         writeFile(pe, minimalPe("msvcp140.dll"));
         List<String> imports = GalgameRedistDetector.peImports(pe);
         check("pe import parsed", imports.contains("msvcp140.dll"));
-        check("pe import maps to vcrun2015",
-                "vcrun2015".equals(GalgameRedistDetector.componentForDll(imports.get(0))));
+        check("pe import maps to vcrun2019",
+                "vcrun2019".equals(GalgameRedistDetector.componentForDll(imports.get(0))));
         deleteTree(pe);
     }
 
     private static void testDllMapping() {
-        check("msvcp140", "vcrun2015".equals(GalgameRedistDetector.componentForDll("MSVCP140.dll")));
+        check("msvcp140", "vcrun2019".equals(GalgameRedistDetector.componentForDll("MSVCP140.dll")));
         check("msvcr120", "vcrun2013".equals(GalgameRedistDetector.componentForDll("msvcr120.dll")));
         check("quartz", "directshow".equals(GalgameRedistDetector.componentForDll("quartz.dll")));
         check("mscoree", "dotnetfx".equals(GalgameRedistDetector.componentForDll("mscoree.dll")));

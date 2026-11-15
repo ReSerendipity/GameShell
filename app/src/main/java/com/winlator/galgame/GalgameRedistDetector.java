@@ -29,7 +29,7 @@ import java.util.Set;
  * {@link #MAX_DLL_NAME}；超限置 {@code truncated} 而不是继续扫。
  *
  * <p>与 {@code assets/wincomponents/wincomponents.json} 的关系：调用方把现有组件键传进来，
- * 本类只负责标 {@code available}；「有证据但没包」（如 vcrun2015）留给诊断页报警，不擅自安装。
+ * 本类只负责标 {@code available}；「有证据但没包」的组件留给诊断页报警，不擅自安装。
  */
 public final class GalgameRedistDetector {
 
@@ -46,8 +46,8 @@ public final class GalgameRedistDetector {
 
     /** PE 导入 DLL 前缀 → 组件键；顺序有意义（140 必须先于 100 等短前缀）。 */
     private static final String[][] IMPORT_RULES = {
-            {"msvcp140", "vcrun2015"}, {"msvcr140", "vcrun2015"},
-            {"vcruntime140", "vcrun2015"}, {"concrt140", "vcrun2015"},
+            {"msvcp140", "vcrun2019"}, {"msvcr140", "vcrun2019"},
+            {"vcruntime140", "vcrun2019"}, {"concrt140", "vcrun2019"},
             {"msvcp120", "vcrun2013"}, {"msvcr120", "vcrun2013"},
             {"msvcp110", "vcrun2012"}, {"msvcr110", "vcrun2012"},
             {"msvcp100", "vcrun2010"}, {"msvcr100", "vcrun2010"},
@@ -194,7 +194,11 @@ public final class GalgameRedistDetector {
             String parent = f.getParentFile() != null
                     ? f.getParentFile().getName().toLowerCase(Locale.ROOT) : "";
             String year = vcYear(lower + " " + parent);
-            component = year != null ? "vcrun" + year : "vcrun_unknown";
+            // 2015-2022 使用同一套 msvcp140/vcruntime140 运行库，统一归到 vcrun2019。
+            component = year != null
+                    ? (("2015".equals(year) || "2017".equals(year) || "2019".equals(year) || "2022".equals(year))
+                        ? "vcrun2019" : "vcrun"+year)
+                    : "vcrun_unknown";
         }
         else if (lower.contains("dotnetfx") || lower.startsWith("ndp") || lower.contains("dotnet")) {
             component = "dotnetfx";
@@ -248,6 +252,7 @@ public final class GalgameRedistDetector {
             case "vcrun2012": return "VC++ 2012";
             case "vcrun2013": return "VC++ 2013";
             case "vcrun2015": return "VC++ 2015-2022";
+            case "vcrun2019": return "VC++ 2015-2022";
             case "dotnetfx":  return ".NET Framework";
             case "direct3d":  return "Direct3D / D3DX";
             case "directx":   return "DirectX (xinput 等)";
