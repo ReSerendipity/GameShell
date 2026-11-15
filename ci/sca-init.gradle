@@ -36,8 +36,22 @@ allprojects {
         failBuildOnCVSS = 7
         formats = ['HTML', 'JSON']
         nvd {
-            // 可选 secret：无 key 时 NVD 匿名限速，首跑慢或超时属正常（重跑即可）
-            apiKey = System.getenv('NVD_API_KEY') ?: ''
+            // 可选 secret：有 key 时走 NVD API（增量细、更新快）。
+            def nvdApiKey = System.getenv('NVD_API_KEY') ?: ''
+            apiKey = nvdApiKey
+            // 2026-11-15：无 key 时 NVD API 匿名限速（5 req/30s）会回 429，
+            // dependency-check 12.2.2 重试耗尽后整任务失败——日志为
+            //   NvApiException: NVD Returned Status Code: 429
+            //   随后 UpdateException: Error updating the NVD Data → "Analysis failed"，
+            // 期间并发写库还会把 H2 数据文件写坏（MVStoreException / ClosedChannelException）。
+            // 因此无 key 时改用 NIST 官方 NVD 2.0 JSON 数据源：静态文件下载，不受 API 限速，
+            // 数据面与 API 同源同构（同一份 CVE 2.0 schema）：
+            //   feed 同目录 nvdcve-2.0-<year>.json.gz / 增量 nvdcve-2.0-modified.json.gz
+            //   meta 由插件按 pattern 把 .json.gz 换成 .meta（对应 nvdcve-2.0-<year>.meta）
+            // 失败阈值与判定口径不变：failBuildOnCVSS = 7、failOnError 默认 true。
+            if (nvdApiKey.isEmpty()) {
+                datafeedUrl = 'https://nvd.nist.gov/feeds/json/cve/2.0/nvdcve-2.0-{0}.json.gz'
+            }
         }
         // 已知误报在跑出首轮报告后按官方 suppressionFile 机制补录（先保持零豁免）。
     }
