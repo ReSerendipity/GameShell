@@ -6,7 +6,9 @@ name: SCA (OWASP dependency-check)
 #    以「每周定时 + 手动触发」持续运行；High+ 漏洞时任务失败并留存报告 artifact；
 #  - 插件经 ci/sca-init.gradle 注入，主构建零改动；扫描输入 = 依赖锁定后的解析结果；
 #  - -PgalgameUiAbi=x86_64 复用 app/build.gradle 既有开关跳过 NDK/CMake 配置；
-#  - NVD_API_KEY 为可选 secret：无 key 时 NVD 匿名限速，首跑可能超时（重跑即可）。
+#  - NVD_API_KEY 为可选 secret：有 key 走 NVD API；无 key 时改用 NIST 官方 2.0 JSON 数据源
+#    （ci/sca-init.gradle 的 nvd 段），避开 API 匿名限速的 429——2026-11-15 起该 429 会让
+#    整个 dependencyCheckAnalyze 失败（Analysis failed），不是漏洞命中。
 #  - zstd-jni 现钉 1.5.2-3（8db51b70 回退，兼容性约束）并在 dependabot.yml ignore：
 #    本扫描是其安全面持续跟踪的兜底，安全面评估记录见 gradle/libs.versions.toml 头注。
 
@@ -40,6 +42,18 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      # NVD 数据目录跨 run 复用：无 key 时首跑要把 2002→今年 的 2.0 feed 全量灌库
+      # （见 ci/sca-init.gradle 的 nvd 段），有缓存后每轮只拉 nvdcve-2.0-modified 与
+      # 实际变化的年份，避免每周都重下 ~150MB。key 用 run_id 递增（缓存不可变），
+      # restore-keys 前缀取最近一份。
+      - name: Restore NVD data cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: dc-data-${{ github.run_id }}
+          restore-keys: |
+            dc-data-
 
       - name: "Java 依赖面漏洞扫描（CVSS >= 7 失败）"
         env:

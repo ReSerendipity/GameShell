@@ -110,22 +110,26 @@ public final class GalgameLanguageDetector {
         return false;
     }
 
-    /** token 必须以「非字母数字」为边界出现（`chs` 命中 `[chs]`、`_chs_`、`-chs`，不命中 `chen`）。 */
+    /**
+     * token 必须以「非字母」为边界出现（`chs` 命中 `[chs]`、`_chs_`、`-chs`、`chs2`，不命中 `chen`）。
+     * 数字算分隔符：真机用例 `HANA9cn.EXE` 的 `cn` 前是数字，必须命中。
+     */
     private static boolean containsToken(String haystack, String token) {
         int from = 0;
         while (true) {
             int at = haystack.indexOf(token, from);
             if (at < 0) return false;
-            boolean leftOk = at == 0 || !isAsciiAlnum(haystack.charAt(at - 1));
+            boolean leftOk = at == 0 || !isAsciiLetter(haystack.charAt(at - 1));
             int end = at + token.length();
-            boolean rightOk = end >= haystack.length() || !isAsciiAlnum(haystack.charAt(end));
+            boolean rightOk = end >= haystack.length() || !isAsciiLetter(haystack.charAt(end));
             if (leftOk && rightOk) return true;
             from = at + 1;
         }
     }
 
-    private static boolean isAsciiAlnum(char c) {
-        return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+    /** 边界只认 ASCII 字母（haystack 已小写化）；数字与符号一律视为分隔。 */
+    private static boolean isAsciiLetter(char c) {
+        return c >= 'a' && c <= 'z';
     }
 
     /** 平假名 / 片假名 / 半角片假名 / 长音符。 */

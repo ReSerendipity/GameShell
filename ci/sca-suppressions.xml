@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP dependency-check 误报抑制表（官方 suppressionFile 机制）。
+  收录口径：只登记「已核对为误报」的单项，每条必须写清证据与复核到期日；
+  不按依赖整项关闸、不设 cvssBelow 阈值、不用 skip——门禁本身保持 failBuildOnCVSS = 7。
+  复核方式：到期前重跑 :app:dependencyCheckAnalyze，对照 dependency-check-report.json。
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <!--
+    zstd-jni 1.5.2-3（本仓刻意钉住的 AAR，见 dependabot.yml ignore 与 GOTCHAS #21）。
+    报告里这 4 条 CVE 的匹配 CPE 是 cpe:2.3:a:github:github（GitHub Enterprise Server），
+    CVE 描述也全是 GitHub Pages / GHES 的构建管线问题，与 zstd / zstd-jni 无任何关系——
+    dependency-check 对 "zstd" 字样的 CPE 归属错误。AAR 内打包的 libzstd 为 1.5.2。
+    证据：2026-11-15 run 43730429780 的 dependency-check-report.json（zstd-jni-1.5.2-3.aar 条目）。
+  -->
+  <suppress until="2027-02-15">
+    <notes><![CDATA[
+CPE 错配：zstd-jni 被匹配到 cpe:2.3:a:github:github（GitHub Enterprise Server），
+4 条 CVE 描述均为 GHES / GitHub Pages，与本仓 AAR 内打包的 libzstd 1.5.2 无关。
+文件：ci/sca-suppressions.xml；证据：run 43730429780 报告；复核：2027-02-15 前。
+]]></notes>
+    <filePath regex="true">.*zstd-jni-1\.5\.2-3\.aar</filePath>
+    <cve>CVE-2020-10518</cve>
+    <cve>CVE-2020-10519</cve>
+    <cve>CVE-2020-10517</cve>
+    <cve>CVE-2012-2055</cve>
+  </suppress>
+
+  <!--
+    kotlin-stdlib（2.1.20 / jdk7-jdk8 1.8.22）命中 CVE-2026-53914。
+    NVD 描述：JetBrains Kotlin < 2.4.20 的 **build cache 元数据**反序列化（CWE-502）；
+    受影响的是编译器 / 构建缓存的读写端，而运行时打进 APK 的 kotlin-stdlib 不含该逻辑。
+    上游修复版本 2.4.20 尚未发布，无法通过升级消除；降级更不可行。
+    证据：2026-11-15 run 43730429780 报告 + NVD CVE-2026-53914 描述。
+  -->
+  <suppress until="2027-02-15">
+    <notes><![CDATA[
+CVE-2026-53914 属 Kotlin 构建缓存（build cache metadata）反序列化，非运行时 stdlib 代码路径；
+修复版本 2.4.20 未发布。运行时只打包 stdlib 供执行，不含 build-cache 处理逻辑。
+文件：ci/sca-suppressions.xml；证据：run 43730429780 报告 + NVD 描述；复核：2027-02-15 前。
+]]></notes>
+    <filePath regex="true">.*kotlin-stdlib.*\.jar</filePath>
+    <cve>CVE-2026-53914</cve>
+  </suppress>
+
+</suppressions>

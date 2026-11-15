@@ -19,10 +19,23 @@
 
 | 路径 | 相对 upstream 的当前状态 | 登记结论 |
 |---|---|---|
-| `app/src/main/java/com/winlator/container/Container.java` | 与 upstream 一致 | 无例外，任何改动都应拦下 |
+| `app/src/main/java/com/winlator/container/Container.java` | `DEFAULT_WINCOMPONENTS` / `FALLBACK_WINCOMPONENTS` 两个常量串**末尾**各追加 `,vcrun2019=0`（+2 −2），既有键值与顺序未动 | **已登记例外**：内置 VC++ 2015-2022 运行库批次（653bd9e，2026-11-15），LGPL-2.1 §2 修改标注同步见 `NOTICE` §2 与 `docs/component-versions.md`；新键默认关闭、由导入向导按需启用。冲突面见下节 |
 | `app/src/main/java/com/winlator/core/LocaleHelper.java` | `supportedLocales` 追加 `"zh_CN"`（+1 −1） | **已登记例外**：简体中文界面所需，`AGENTS.md` 称 A7，源自 b2b9e3e（2026-09-24）；rebase 时该差异会重新出现在推送范围里，属预期 |
 | `app/src/main/res/values/strings.xml` | ① `app_name` Winlator → GameShell 并加一行注释；② 删除条目 `native_resolution`；③ 删除零引用条目 `about`（2026-11-02，zero-mod-allow 登记） | ① **已登记例外**：品牌化所需，源自 1bf0011（2026-09-27）；2026-11-02 仓库改名同步为 GameShell（b78ce0a8），仍仅动 `app_name` 一行；② **rebase 阻断项，见下节**；③ About 入口已移除（21c7e46d），字符串全仓零引用 |
 | `app/src/main/java/com/winlator/core/DefaultVersion.java` | `BOX64` 常量 `"0.4.4"` → `"0.4.5"`（+1 −1） | **已登记例外**：本仓库自建 box64 的版本号，源自 ca5d411（0.4.5 build + mpshim heal shim）。上游文件，日后移植官方改动时必冲突，属预期。它同时是 `tools/prepare_box64_lib.sh` 缺省打包哪份 tzst 的**唯一真源**——改这个值等于改构建默认，需与 `assets/box64/` 下实际存在的 tzst 对齐 |
+
+## ①-1 `Container.java` 追加 `vcrun2019=0` 的冲突面（653bd9e）
+
+- **改动内容**：`DEFAULT_WINCOMPONENTS` 与 `FALLBACK_WINCOMPONENTS` 末尾各加一个 `vcrun2019=0`；
+  其余键值、顺序、分隔符一律未动（`git diff 653bd9e^ 653bd9e -- app/src/main/java/com/winlator/container/Container.java`
+  只有这两行）。
+- **为什么必须动受守卫文件**：`checkObsoleteOrMissingProperties()` 以 `DEFAULT_WINCOMPONENTS` 为模板重建
+  容器的 `wincomponents` 串——只有出现在默认串里的 key 才会被写回 `.container`；放到
+  `com.winlator.galgame` 新包或新资源文件里都改不到这个模板。
+- **移植官方改动时的冲突点**：上游若改写这两个常量，冲突形态恒为「整行替换」；合并口径 = 取上游新串，
+  再在末尾补回 `,vcrun2019=0`。`vcrun2019.tzst` 与 `wincomponents.json` 条目是新增文件，不在冲突面内。
+- **连带改动（不受守卫）**：`WineUtils.overrideWinComponentDlls` 的组件比较由「按位置」改为「按 key」，
+  否则旧容器缺 `vcrun2019` 键时按位置比较整体错位（同笔提交，已记入下文「受守卫路径之外」表）。
 
 ## ② `native_resolution` 的删除：现在安全，rebase 后会破
 
@@ -56,6 +69,7 @@
 | `app/src/main/java/com/winlator/XServerDisplayActivity.java`（第六轮追加） | ① galgame 直启（exec_path）不再创建上游 FrameRating（用户反馈关不掉+双浮窗：上游 update() 每帧拉回 VISIBLE + 容器残留 FULL 档），帧/GPU 读取与实例解耦（PerfHud 独立接帧）；② 游戏内菜单高级项按设置页开关显隐（setMenuVisible，默认隐藏） | 2026-10-25 第六轮 HUD 重复修复 + 菜单开关 | Activity 私有逻辑，galgame 包无等价注入点 |
 | `app/src/main/res/layout/preloader_dialog.xml` | 启动加载浮层品牌化：全屏 90% 黑遮罩 + GameShell 字距标 + 主文案 + 2dp 细进度条（Swiss 纸面语言），不再引用上游 `preloaderBackground` / `progressBarIndeterminateImage` attr；`@+id/TextView` 保留供 `PreloaderDialog.setText` | 2026-10-25 用户反馈「启动加载还是原版 UI」 | 布局被上游 `PreloaderDialog.setContentView` 固定引用，替换视图需改上游类，收益不成比例 |
 | `app/src/main/java/com/winlator/renderer/GLRenderer.java` | `collectRenderableWindows` 的 `inBounds` 上界由 `width < screen` 放宽为 `<=`：窗口恰好等于虚拟屏尺寸时也获得居中的 FullscreenTransformation。KiriKiri 把主窗口固定在 (152,152)，等尺寸窗口右/下边缘被裁（TD-14 残留①） | 2026-10-25 全屏修复（窗口铺满 P2） | 窗口入格判定是 renderer 私有循环条件，galgame 包无等价注入点 |
+| `app/src/main/java/com/winlator/core/WineUtils.java` | `overrideWinComponentDlls` 的组件开关比较由上游「迭代器按位置对齐」改为「`KeyValueSet.get(key)` 按 key 取值」：旧容器配置里没有 `vcrun2019` 键时，按位置比较会整体错位（653bd9e） | 2026-11-15 内置 vcrun2019 批次 | 组件覆盖逻辑在上游静态方法内部，改动必须落在原方法；galgame 包无等价注入点 |
 | `app/src/main/cpp/winlator/src/xoutput_stream.c` | `XOutputStream_send` 由裸 `write()` 改为 `send(MSG_NOSIGNAL)` 循环写满；EINTR 重试；EAGAIN 时 `poll(POLLOUT)` 上限 2 秒；整体发送失败（含附带 fd 的短写）返回 false | 2026-10-24 `docs/box64-wine-launch-chain.md` §7.2 | X 协议写入是 JNI 原生实现，没有 Java 侧等价物，只能就地修 |
 
 > 这是本仓库**第一处**对 Winlator 组件原生 C 的改动——此前对组件的改动全部落在
@@ -77,6 +91,7 @@
 
 ```zero-mod-allow
 M app/src/main/res/values/strings.xml | About 入口已移除（21c7e46d），字符串全仓零引用，删除死条目 | 2026-11-02
+M app/src/main/java/com/winlator/container/Container.java | 内置 vcrun2019 运行库：默认/回退组件串末尾各追加 vcrun2019=0（653bd9e），新键默认关闭、由导入向导按需启用 | 2026-11-15
 ```
 
 ## 改动规则
