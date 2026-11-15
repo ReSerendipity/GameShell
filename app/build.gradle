@@ -37,8 +37,8 @@ android {
         // 真机回归 R1–R17（TD-02）已于 2026-10-24 永久跳过：本机只有 Adreno 设备，Mali 档
         // 永不可能执行，该条不再是发版门禁（权威口径见 docs/tech-debt-register.md TD-02）。
         targetSdkVersion 30
-        versionCode 36
-        versionName "11.5"
+        versionCode 37
+        versionName "11.6"
     }
 
     signingConfigs {

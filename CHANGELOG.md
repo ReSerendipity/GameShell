@@ -12,7 +12,12 @@
 
 ## [Unreleased]
 
+## [11.6] - 2026-11-15
+
 ### Fixed
+
+- **SCA（OWASP dependency-check）恢复可跑：无 `NVD_API_KEY` 时改走 NIST 官方 NVD 2.0 JSON 数据源**（`ci/sca-init.gradle`、`.github/workflows/sca.yml`）：定时任务此前死在数据更新阶段——`NvApiException: NVD Returned Status Code: 429` → `Error updating the NVD Data` → `Analysis failed`，报告未生成，并发写库还把 H2 数据文件写坏；现按「有 key 走 API、无 key 走 NIST 2.0 feed」分流，并把 `~/.gradle/dependency-check-data` 纳入 CI 缓存。判定口径不变：`failBuildOnCVSS = 7`、`failOnError` 默认 true——不是关闸，也不是抬阈值。
+- **零改铁律登记补齐 `Container.java` 的 `vcrun2019=0` 例外**（`ci/zero-mod-exceptions.md`）：机器可读块按「变更类型 + 路径」登记 `M app/src/main/java/com/winlator/container/Container.java`，人类可读表补 LGPL-2.1 §2 修改标注与移植冲突面；本地复跑守卫只放行这一处。
 
 - **TD-05 box64 构建端到端可复现，并在真机跑通**（`docs/tech-debt-register.md`、`docs/box64-wine-launch-chain.md` §2、`docs/real-device-verification.md` §10.9）：`tools/box64/build_box64_android.sh` 从「手工步骤照抄」改为一条命令跑完（对象清单靠 CMake 写 rsp、MSYS 不再改写 `--dynamic-linker`、crt/libgcc 取真件、`libgcc_s.a` 空归档、缺 zstd 时走 python 压流、`PT_INTERP` 读字符串自检）；新增 `tools/box64/fetch_gnu_sysroot.py` 固化 sysroot 拼装。干净 clone + 现拼 sysroot ⇒ rc=0，真机 `run-as` 直跑输出 `Box64 arm64 v0.4.5 2a062311 with Dynarec`。同时坐实一条约束：sysroot 的 glibc 必须 ≤ 设备 rootfs（2.39），否则形态全对但上机报 `GLIBC_2.43/2.44 not found`。
 - **X server 事件发送在客户端断连时抛 `ConcurrentModificationException`，真机整进程 SIGABRT**：`XClient.freeResources()` 会重入销毁窗口，在 `Window.sendEvent` 的 for-each 循环里改掉同一个 `eventListeners`；crash buffer 的 abort message 为 `JNI CallVoidMethod called with pending exception java.util.ConcurrentModificationException`，栈为 `Window.sendEvent` ← `WindowManager.removeAllSubwindowsAndWindow` ← `destroyWindow` ← `XClient.freeResources`。五个 `sendEvent` 重载改为快照迭代（`snapshotEventListeners()`）。
