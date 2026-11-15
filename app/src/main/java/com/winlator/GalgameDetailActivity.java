@@ -22,6 +22,7 @@ import com.winlator.container.ContainerManager;
 import com.winlator.core.AppUtils;
 import com.winlator.galgame.EngineDetector;
 import com.winlator.galgame.GalgameCoverProvider;
+import com.winlator.galgame.GalgameFixRegistry;
 import com.winlator.galgame.engine.GameEngineRegistry;
 import com.winlator.galgame.GalgameLibraryIndex;
 import com.winlator.galgame.GalgameLocaleInjector;
@@ -193,6 +194,31 @@ public class GalgameDetailActivity extends AppCompatActivity {
         bindForceContainer();
         bindResolution();
         bindWindowFit();
+        bindFixPreview();
+    }
+
+    /**
+     * GameShell P0-3：详情页只读预览「将改动哪些字段」。
+     * 只调 {@link ImportFlow#planGameFixes}（读 conf + 当前值），不写容器/overlay。
+     */
+    private void bindFixPreview() {
+        LinearLayout box = findViewById(R.id.LLFixPreview);
+        TextView body = findViewById(R.id.TVFixPreviewBody);
+        if (box == null || body == null) return;
+        if (container == null) {
+            box.setVisibility(View.GONE);
+            return;
+        }
+
+        GalgameFixRegistry.Plan plan = ImportFlow.planGameFixes(this, container,
+                item.engineName, item.exe != null ? item.exe.getName() : "");
+        box.setVisibility(View.VISIBLE);
+        if (plan == null || plan.isEmpty()) {
+            body.setText("未命中已启用的修复条目；不会写入配置。");
+        }
+        else {
+            body.setText(plan.preview().trim());
+        }
     }
 
     /** 可选虚拟屏尺寸：默认 720p 对多数 galgame 是"正好铺满"，越大越不容易裁切但小窗感越强。 */

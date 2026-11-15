@@ -156,6 +156,40 @@
 
                 <include layout="@layout/swiss_detail_rows" />
 
+                <!-- GameShell P0-3：每游戏修复只读预览（只读 fixPlan，不写容器配置） -->
+                <LinearLayout
+                    android:id="@+id/LLFixPreview"
+                    style="@style/SwissRow"
+                    android:orientation="vertical"
+                    android:gravity="start"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:visibility="gone">
+
+                    <TextView
+                        style="@style/SwissRowTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="将改动哪些字段" />
+
+                    <TextView
+                        android:id="@+id/TVFixPreviewBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:lineSpacingExtra="3dp"
+                        android:textSize="11sp"
+                        android:textColor="@color/swiss_ink" />
+
+                    <TextView
+                        style="@style/SwissRowMeta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:singleLine="false"
+                        android:text="只读预览 · 不会写入配置" />
+                </LinearLayout>
+
                 <!-- 高级 -->
                 <LinearLayout
                     android:id="@+id/BTAdvanced"
