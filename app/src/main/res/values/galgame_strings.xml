@@ -6,7 +6,7 @@
 <resources>
     <!-- 应用/外壳 -->
     <string name="galgame_app_name">GameShell</string>
-    <string name="galgame_tagline">GalGame Android Shell (Winlator-based)</string>
+    <string name="galgame_tagline">Windows 游戏安卓运行器 (Winlator-based)</string>
 
     <!-- 底部导航 Tab -->
     <!-- C4：上游「容器」屏改名为「容器管理」并降级到末位 Tab（不改 values/strings.xml 的 containers） -->
@@ -70,7 +70,7 @@
     <!-- 存档 (B4/P4) -->
     <string name="galgame_save_autobackup_on">退出自动备份：开</string>
     <string name="galgame_save_export">导出存档</string>
-    <string name="galgame_save_export_done">存档已导出至 Download/galgame-backup</string>
+    <string name="galgame_save_export_done">存档已导出至 Download 下的备份目录</string>
     <string name="galgame_save_export_fail">存档导出/恢复失败</string>
     <string name="galgame_save_restored">存档已从备份恢复</string>
     <string name="galgame_save_no_backup">没有找到该游戏的存档备份</string>
@@ -98,7 +98,7 @@
 
     <!-- 关于 / 源码获取（A6 / AC-18，LGPL-2.1 源码提供义务） -->
     <string name="galgame_about">关于</string>
-    <string name="galgame_about_message">GameShell\n基于 winlator-app（LGPL-2.1）的 galgame 专用外壳。\n\n对应源码（LGPL-2.1 提供义务）：\nhttps://github.com/ReSerendipity/GameShell\n\n第三方组件与字体政策详见仓库 NOTICE。\n本应用不含游戏本体、不提供破解。</string>
+    <string name="galgame_about_message">GameShell\n基于 winlator-app（LGPL-2.1）的 Windows 游戏运行外壳。\n\n对应源码（LGPL-2.1 提供义务）：\nhttps://github.com/ReSerendipity/GameShell\n\n第三方组件与字体政策详见仓库 NOTICE。\n本应用不含游戏本体、不提供破解。</string>
 
     <!-- 存储权限运行时引导（评估报告 #3） -->
     <string name="galgame_storage_perm_title">需要「所有文件访问权」</string>

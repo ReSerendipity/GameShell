@@ -129,7 +129,7 @@ public class GalgameDetailActivity extends AppCompatActivity {
         metaTop.setText(getString(R.string.galgame_detail_meta, engineDisplay));
 
         TextView eyebrow = findViewById(R.id.TVEyebrow);
-        eyebrow.setText("GALGAME / " + engineDisplay);
+        eyebrow.setText("GAME / " + engineDisplay);
 
         ((TextView) findViewById(R.id.TVTitle)).setText(item.label);
         ((TextView) findViewById(R.id.TVPlayed)).setText(container != null ? "已就绪" : "原生目录");
