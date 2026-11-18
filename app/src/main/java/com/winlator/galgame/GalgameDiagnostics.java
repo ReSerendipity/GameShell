@@ -7,6 +7,7 @@ import com.winlator.container.Container;
 import com.winlator.container.GraphicsDrivers;
 import com.winlator.core.GPUHelper;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -27,6 +28,9 @@ import java.util.List;
  *   4) 32/64 位（读 PE 头 Machine 字段）
  *   5) 音频后端
  *   6) 加密包（A5：仅提示，不破解）
+ *   7) 启动里程碑（P0-4：X 连接 / wine 存活 / 首帧，来自 galgame_launch_session.json）
+ *   8) 运行时依赖（P0-2：导入期 evidence 与我方组件包是否齐备，只提示不安装）
+ *   9) 每游戏修复（P0-3：已落地的字段级修复，可回滚）
  *
  * 读取 P1/P2 写入的 galgame_overlay.json + Container 现配置，产出有序检查表。
  */
@@ -84,6 +88,10 @@ public final class GalgameDiagnostics {
         checkBitness(overlay, report);
         checkAudio(container, report);
         checkEncryption(overlay, report);
+        // P0-4 / P0-2 / P0-3：启动里程碑、运行时依赖建议、已落地修复
+        checkLaunchStages(container, report);
+        checkRedist(container, overlay, report);
+        checkFixes(overlay, report);
 
         return report;
     }
@@ -268,6 +276,196 @@ public final class GalgameDiagnostics {
         r.checks.add(new Check("encryption", Severity.WARN, "加密包（A5）",
                 "检测到加密特征：" + marks,
                 "本外壳仅检测提示，不提供破解（A5）；请使用正版/合法渠道"));
+    }
+
+    // ---- 7) 启动里程碑（P0-4） ----
+
+    /**
+     * 三段客观里程碑：X 连接可建立 → wine 进程存活 → 首帧到达。
+     * 判据全部来自事件打点（{@link GalgameLaunchSession}），不用固定耗时猜。
+     */
+    private static void checkLaunchStages(Container container, Report r) {
+        JSONObject session = GalgameLaunchSession.readFor(container);
+        if (session == null) {
+            r.checks.add(new Check("launch_stages", Severity.INFO, "启动里程碑",
+                    "本容器还没有启动会话文件（启动一次后再查看）", ""));
+            return;
+        }
+
+        long started = session.optLong("started_at", 0L);
+        long age = started > 0 ? System.currentTimeMillis() - started : 0L;
+        JSONArray stages = session.optJSONArray("stages");
+
+        JSONObject x = findStage(stages, GalgameLaunchSession.X_SERVER_READY);
+        JSONObject wine = findStage(stages, GalgameLaunchSession.WINE_STARTED);
+        JSONObject frame = findStage(stages, GalgameLaunchSession.FIRST_FRAME);
+        JSONObject exited = findStage(stages, GalgameLaunchSession.EXITED);
+        JSONObject stopped = findStage(stages, GalgameLaunchSession.STOPPED);
+
+        if (x == null) {
+            r.checks.add(new Check("launch_stages", Severity.ERROR, "启动里程碑",
+                    "会话已开始，但 X 连接层没有就绪（缺 X_SERVER_READY）——问题在图形/连接层，不在游戏",
+                    "查看 logcat 中 XConnector/XServer 段；确认 rootfs 正常、未被其它实例占用"));
+            return;
+        }
+
+        if (wine == null) {
+            String detail = "X 已就绪（+" + since(x) + "ms），但 guest 进程还没有 fork 出 pid";
+            if (stopped != null) {
+                r.checks.add(new Check("launch_stages", Severity.INFO, "启动里程碑",
+                        detail + "；随后被手动停止", ""));
+            }
+            else if (exited != null) {
+                r.checks.add(new Check("launch_stages", Severity.ERROR, "启动里程碑",
+                        detail + "；进程退出 " + detailOf(exited),
+                        "看 logcat 与 box64 trace：多为 box64/wine 解包失败或 exe 路径不可达"));
+            }
+            else {
+                r.checks.add(new Check("launch_stages", Severity.WARN, "启动里程碑",
+                        detail + "（已等待 " + age + "ms）",
+                        "若持续超过 20s：检查 box64 版本包是否解压完成、exe 是否在容器内存在"));
+            }
+            return;
+        }
+
+        if (frame == null) {
+            if (exited != null) {
+                r.checks.add(new Check("launch_stages", Severity.ERROR, "启动里程碑",
+                        "wine 已启动（+" + since(wine) + "ms）但未产生首帧就退出：" + detailOf(exited),
+                        "按 box64 trace / WINEDEBUG 排查；这类形态是「进程活着但没画出来」的对立面"));
+            }
+            else if (stopped != null) {
+                r.checks.add(new Check("launch_stages", Severity.INFO, "启动里程碑",
+                        "wine 已启动，但在首帧前被手动停止", ""));
+            }
+            else if (age < GalgameLaunchSession.FIRST_FRAME_HINT_MS) {
+                r.checks.add(new Check("launch_stages", Severity.INFO, "启动里程碑",
+                        "启动中：wine 已起（+" + since(wine) + "ms），等待首帧（已 " + age + "ms）", ""));
+            }
+            else {
+                r.checks.add(new Check("launch_stages", Severity.WARN, "启动里程碑",
+                        "首帧未到达：wine 已运行 " + age + "ms，X 侧仍无窗口内容更新（TD-16 形态）",
+                        "开 box64 trace；检查 GPU 驱动（Adreno→Turnip / Mali→Vortek）与容器分辨率"));
+            }
+            return;
+        }
+
+        String detail = "X +" + since(x) + "ms / wine +" + since(wine)
+                + "ms / 首帧 +" + since(frame) + "ms";
+        Severity sev = Severity.OK;
+        if (exited != null && !isZeroStatus(exited)) {
+            sev = Severity.WARN;
+            detail += "；进程已退出 " + detailOf(exited);
+        }
+        r.checks.add(new Check("launch_stages", sev, "启动里程碑", detail,
+                sev == Severity.OK ? "" : "非 0 退出：看 logcat 崩溃段与 GalgameCrashHandler 报告"));
+    }
+
+    private static JSONObject findStage(JSONArray stages, String name) {
+        if (stages == null) return null;
+        for (int i = 0; i < stages.length(); i++) {
+            JSONObject o = stages.optJSONObject(i);
+            if (o != null && name.equals(o.optString("stage"))) return o;
+        }
+        return null;
+    }
+
+    private static long since(JSONObject stage) {
+        return stage == null ? 0L : stage.optLong("since_ms", 0L);
+    }
+
+    private static String detailOf(JSONObject stage) {
+        return stage == null ? "" : stage.optString("detail", "");
+    }
+
+    private static boolean isZeroStatus(JSONObject exited) {
+        String d = detailOf(exited);
+        return d.equals("status=0") || d.isEmpty();
+    }
+
+    // ---- 8) 运行时依赖建议（P0-2，只展示不安装） ----
+
+    private static void checkRedist(Container container, JSONObject overlay, Report r) {
+        JSONArray arr = overlay != null ? overlay.optJSONArray("redist_recommend") : null;
+        if (arr == null || arr.length() == 0) return;   // 没有证据就不占位
+
+        int missing = 0;
+        int disabled = 0;
+        StringBuilder missingNames = new StringBuilder();
+        StringBuilder disabledNames = new StringBuilder();
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o == null) continue;
+            String component = o.optString("component", "");
+            String label = o.optString("label", component);
+            boolean available = o.optBoolean("available", false);
+
+            if (!available) {
+                missing++;
+                appendName(missingNames, label + "(" + component + ")");
+            }
+            else if (container != null && !winComponentEnabled(container.getWinComponents(), component)) {
+                disabled++;
+                appendName(disabledNames, label + "(" + component + ")");
+            }
+        }
+
+        if (missing > 0) {
+            r.checks.add(new Check("redist_components", Severity.WARN, "运行时依赖",
+                    "检测到需要但本地没有组件包：" + missingNames
+                            + (disabled > 0 ? "；另有未启用：" + disabledNames : ""),
+                    "本批只侦测不打包：需先在 assets/wincomponents 补该组件包，才谈得上「免启动安装」"));
+        }
+        else if (disabled > 0) {
+            r.checks.add(new Check("redist_components", Severity.WARN, "运行时依赖",
+                    "检测到需要且已有组件包，但容器未启用：" + disabledNames,
+                    "重新导入以套用组件，或在容器设置里开启对应组件"));
+        }
+        else {
+            r.checks.add(new Check("redist_components", Severity.OK, "运行时依赖",
+                    "导入期证据涉及的组件均已具备并启用", ""));
+        }
+    }
+
+    private static void appendName(StringBuilder sb, String name) {
+        if (sb.length() > 0) sb.append("、");
+        sb.append(name);
+    }
+
+    /** 极简 wincomponents CSV 判定：key 存在且值为 1/true。 */
+    private static boolean winComponentEnabled(String csv, String key) {
+        if (csv == null || key == null || key.isEmpty()) return false;
+        for (String part : csv.split(",")) {
+            int eq = part.indexOf('=');
+            if (eq <= 0) continue;
+            if (!key.equals(part.substring(0, eq).trim())) continue;
+            String v = part.substring(eq + 1).trim();
+            return "1".equals(v) || "true".equalsIgnoreCase(v);
+        }
+        return false;
+    }
+
+    // ---- 9) 已落地的每游戏修复（P0-3） ----
+
+    private static void checkFixes(JSONObject overlay, Report r) {
+        JSONArray arr = overlay != null ? overlay.optJSONArray("fixes_applied") : null;
+        if (arr == null || arr.length() == 0) {
+            r.checks.add(new Check("game_fixes", Severity.INFO, "每游戏修复",
+                    "本游戏没有命中已启用的修复条目（数据层已就绪，当前 galgame_fixes.conf 无启用项）",
+                    ""));
+            return;
+        }
+
+        StringBuilder detail = new StringBuilder();
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o == null) continue;
+            appendName(detail, o.optString("field") + ": " + o.optString("from", "") + "→"
+                    + o.optString("to", "") + " [" + o.optString("fix", "") + "]");
+        }
+        r.checks.add(new Check("game_fixes", Severity.OK, "每游戏修复",
+                "已应用 " + arr.length() + " 项字段级修复：" + detail,
+                "如需还原：ImportFlow.revertGameFixes(container)"));
     }
 
     // ---- 工具 ----

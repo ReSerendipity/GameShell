@@ -2,8 +2,8 @@
 
 # GameShell
 
-**Galgame 的 Android 运行器 —— 导入即玩，自动识别引擎并路由到原生或模拟层。**
-A standalone Android galgame player: import a folder, auto-detect the engine, and play.
+**Windows 游戏的 Android 运行器 —— 导入即玩，自动识别引擎并路由到原生或模拟层。**
+A standalone Android player for Windows games: import a folder, auto-detect the engine, and play.
 
 [![CI](https://github.com/ReSerendipity/GameShell/actions/workflows/ci.yml/badge.svg)](https://github.com/ReSerendipity/GameShell/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/ReSerendipity/GameShell?color=orange)](https://github.com/ReSerendipity/GameShell/releases)
@@ -23,7 +23,7 @@ A standalone Android galgame player: import a folder, auto-detect the engine, an
 
 ### 项目简介
 
-**GameShell** 是独立的 galgame 安卓运行器，内嵌 [`brunodev85/winlator-app`](https://github.com/brunodev85/winlator-app)（LGPL-2.1）作为 Windows 模拟层**源码组件**——集成与修改标注方式同内嵌的 Kirikiroid2 / Ren'Py，见 [`NOTICE`](NOTICE)。它在 APK 内同时内嵌 Ren'Py 与 Kirikiri2 原生运行时，导入游戏文件夹后自动识别引擎（当前覆盖 19 种引擎指纹），在「内嵌原生引擎 / 外部原生播放器（可选）/ Winlator 模拟」之间智能路由，无需手工配置 Wine 容器。
+**GameShell** 是独立的 Windows 游戏安卓运行器，内嵌 [`brunodev85/winlator-app`](https://github.com/brunodev85/winlator-app)（LGPL-2.1）作为 Windows 模拟层**源码组件**——集成与修改标注方式同内嵌的 Kirikiroid2 / Ren'Py，见 [`NOTICE`](NOTICE)。它在 APK 内同时内嵌 Ren'Py 与 Kirikiri2 原生运行时，导入游戏文件夹后自动识别引擎（当前覆盖 19 种引擎指纹），在「内嵌原生引擎 / 外部原生播放器（可选）/ Winlator 模拟」之间智能路由，无需手工配置 Wine 容器。
 
 > 治理规范：[ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
@@ -139,7 +139,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 ### 使用示例
 
 1. 安装 APK 后打开应用，进入游戏库封面墙；设置从报头右侧的设置按钮进入（容器与运行环境管理在「设置 → 开发者 → 高级设置」）。
-2. 点「导入游戏」选择存放 galgame 的文件夹（启动 exe 须在所选文件夹顶层）。
+2. 点「导入游戏」选择存放游戏的文件夹（启动 exe 须在所选文件夹顶层）。
 3. 向导自动检测引擎、创建容器、复制文件并注入日文环境。
 4. 回到游戏库，点封面墙中的游戏卡片即可启动。
 5. 长按卡片可查看详情、诊断、导出存档或切换运行方式。
@@ -187,7 +187,7 @@ A：本项目为源码分发，Release 仅附源码 SBOM（CycloneDX）与 SHA25
 
 ### Introduction
 
-**GameShell** is a standalone Android galgame player that embeds [Winlator](https://github.com/brunodev85/winlator-app) (LGPL-2.1) as its Windows-emulation source component — with modifications marked, same pattern as the bundled Kirikiroid2 / Ren'Py engines (see [`NOTICE`](NOTICE)). It also embeds Ren'Py and Kirikiri2 native runtimes inside the APK. After you pick a game folder, GameShell auto-detects the engine (19 engine fingerprints) and routes the game to the embedded native engine, an optional external native player, or the Winlator emulation layer — no manual Wine container configuration needed.
+**GameShell** is a standalone Android player for Windows games that embeds [Winlator](https://github.com/brunodev85/winlator-app) (LGPL-2.1) as its Windows-emulation source component — with modifications marked, same pattern as the bundled Kirikiroid2 / Ren'Py engines (see [`NOTICE`](NOTICE)). It also embeds Ren'Py and Kirikiri2 native runtimes inside the APK. After you pick a game folder, GameShell auto-detects the engine (19 engine fingerprints) and routes the game to the embedded native engine, an optional external native player, or the Winlator emulation layer — no manual Wine container configuration needed.
 
 > Governance: [ReSerendipity/.github/governance](https://github.com/ReSerendipity/.github/tree/main/governance)
 
@@ -294,7 +294,7 @@ javac -Xlint:all -cp /tmp/stubs-out:/tmp/check -d /tmp/hot \
 ### Usage
 
 1. Install the APK and open the app. You land on the library cover wall; tap the settings icon in the header to open Settings (container and runtime management live under **Settings → Developer → Advanced Settings**).
-2. Tap **Import Game** and pick a folder containing your galgame (the launcher exe must be at the top level).
+2. Tap **Import Game** and pick a folder containing your game (the launcher exe must be at the top level).
 3. The wizard detects the engine, creates a container, copies files, and injects Japanese locale.
 4. Return to the library and tap the game card to launch.
 5. Long-press a card for details, diagnostics, save export, or engine-route override.

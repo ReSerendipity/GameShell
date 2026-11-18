@@ -45,3 +45,27 @@ git ls-remote https://github.com/zeas2/Kirikiroid2 HEAD
    [`real-device-verification.md`](real-device-verification.md) 对应引擎的冒烟用例。
 3. **不追 nightly**：只跟官方稳定版；Winlator 组件只按需移植（修复型提交优先，
    功能型提交评估后再定）。
+
+## Wincomponents 资产登记：VC++ 2015-2022（`vcrun2019`）
+
+> 位置：`app/src/main/assets/wincomponents/vcrun2019.tzst`；清单条目在
+> `app/src/main/assets/wincomponents/wincomponents.json`。该目录的 `.tzst` 按
+> `.gitignore:27` 默认不跟踪，构建 APK 时由本地资产直接打包。
+
+| 项目 | 登记值 |
+|---|---|
+| 组件键 | `vcrun2019`（`dlnames` 26 项，`restoreBuiltinDlls=true`） |
+| 内容 | 官方 VC++ 2015-2022 x64/x86 CRT + MFC：`system32/` 26 个 DLL、`syswow64/` 25 个 DLL（x86 无 `vcruntime140_1.dll`） |
+| 官方安装包版本 | `14.44.35211.0`（ProductName `Microsoft Visual C++ 2015-2022 Redistributable (x64/x86) - 14.44.35211`） |
+| x64 安装包 | 25,635,768 B；SHA-256 `CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B` |
+| x86 安装包 | 13,953,392 B；SHA-256 `0C09F2611660441084CE0DF425C51C11E147E6447963C3690F97E0B25C55ED64` |
+| x64 下载 | `https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe` |
+| x86 下载 | `https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/0C09F2611660441084CE0DF425C51C11E147E6447963C3690F97E0B25C55ED64/VC_redist.x86.exe` |
+| 本仓 tzst | 11,405,839 B；SHA-256 `77398B03CA00358CC0F4FD08B54C3A8D34F0D5EC7EECB8D5C2DFDA6578005084`；tar+zstd，根为 `./` + `system32/` + `syswow64/`，与 `vcrun2010.tzst` 同构 |
+| 提取方式 | 官方 bootstrapper 的 PE 叠加层内 `MSCF` CAB（非 `/layout`；`/layout` 只复制 bootstrapper，不能产出 MSI/CAB）；CAB 内 MSI/CAB 再解出 DLL，未修改二进制 |
+| 未纳入 | 官方安装包中的 Windows 7/8/8.1 UCRT 更新 CAB（KB2999226 等）；本组件面向 Wine prefix，UCRT 由 Wine 提供，不安装宿主机更新 |
+| 再分发依据 | Microsoft Visual C++ 可再发行组件；仅持有有效 Visual Studio 许可证的开发者可按 Microsoft 软件许可条款再分发**未修改**文件。条款/可分发代码清单：<https://learn.microsoft.com/zh-cn/cpp/windows/redistributing-visual-cpp-files?view=msvc-170>、<https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution?view=visualstudio> |
+| 安装链路 | `XServerDisplayActivity.extractWinComponentFiles()` → `TarCompressorUtils.extract(Type.ZSTD, ..., "wincomponents/vcrun2019.tzst", windowsDir)`；`WineUtils.overrideWinComponentDlls()` 按 `dlnames` 写 `Software\\Wine\\DllOverrides=native,builtin` |
+| 兼容接线 | Winlator 的 `Container.checkObsoleteOrMissingProperties()` 只保留 `DEFAULT_WINCOMPONENTS` 中列出的键；新键会被裁掉。已在 `Container.DEFAULT_WINCOMPONENTS` 与 `FALLBACK_WINCOMPONENTS` **末尾新增** `vcrun2019=0`，既有条目与顺序未改。 |
+| 真机验证（2026-11-15） | 设备 RMX5010 / Android 16 / `com.winlator` 11.5；容器 `xuser-4` 配置 `wincomponents=...,vcrun2019=1`。冷启动 `GalgameShortcutActivity` 后：`system32/` 26 个、`syswow64/` 25 个 VC DLL 落盘（mtime 15:50 刷新）；`user.reg` 的 `Software\\Wine\\DllOverrides` 有 26 个 `*140*` 键，均为 `native,builtin`；`msvcp140.dll` / `vcruntime140.dll` / `msvcp140_1.dll` / `mfc140.dll` 的 SHA-256 与官方 staging 逐字节一致。 |
+

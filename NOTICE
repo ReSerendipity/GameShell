@@ -38,6 +38,28 @@ GameShell — NOTICE
   ICU 项目任何实现代码；函数名/语义接口属 ICU 项目（ICU License），实现为本仓独立
   编写并以 LGPL-2.1 随仓发布。编译：NDK clang --target=x86_64-pc-windows-gnu。
 
+3.1 微软 Visual C++ 2015-2022 运行库（官方再分发）
+------------------------------------------------
+- 组件：`assets/wincomponents/vcrun2019.tzst`（`vcrun2019`，11,405,839 B，
+  SHA-256 `77398B03CA00358CC0F4FD08B54C3A8D34F0D5EC7EECB8D5C2DFDA6578005084`）。
+- 来源：Microsoft Visual C++ 2015-2022 Redistributable，版本 `14.44.35211.0`。
+  x64：`https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe`
+  （SHA-256 `CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B`）；
+  x86：`https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/0C09F2611660441084CE0DF425C51C11E147E6447963C3690F97E0B25C55ED64/VC_redist.x86.exe`
+  （SHA-256 `0C09F2611660441084CE0DF425C51C11E147E6447963C3690F97E0B25C55ED64`）。
+- 再分发条款：仅限持有有效 Microsoft Visual Studio 许可证的开发者，按 Microsoft
+  软件许可条款再分发**未修改**的可分发文件；可分发代码清单（REDIST）见
+  <https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution?view=visualstudio>，
+  部署说明见
+  <https://learn.microsoft.com/zh-cn/cpp/windows/redistributing-visual-cpp-files?view=msvc-170>。
+- 本仓仅从官方安装包提取并打包为 Winlator 组件格式；未修改任何微软二进制，未纳入
+  宿主机 UCRT 更新包（KB2999226 等）。组件内容/下载/校验清单见
+  [`docs/component-versions.md`](docs/component-versions.md) 的“Wincomponents 资产登记”。
+- 兼容接线：Winlator 的 `Container.checkObsoleteOrMissingProperties()` 只保留
+  `DEFAULT_WINCOMPONENTS` 中列出的键，新组件键会被裁掉。为此在
+  `Container.DEFAULT_WINCOMPONENTS` 与 `FALLBACK_WINCOMPONENTS` **末尾新增**
+  `vcrun2019=0`；既有条目及顺序未改，仅新增一个默认关闭的组件键。
+
 3. 上游随附的第三方组件（未在本仓库内修改）
 -------------------------------------------
 运行期依赖（由上游 winlator-app 分发，本项目不改其源码）：

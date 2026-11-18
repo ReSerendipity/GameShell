@@ -31,6 +31,10 @@
         "dlnames": ["msvcp100", "msvcr100", "vcomp100", "atl100"],
         "restoreBuiltinDlls": true
     },
+    "vcrun2019" : {
+        "dlnames": ["concrt140", "mfc140", "mfc140chs", "mfc140cht", "mfc140deu", "mfc140enu", "mfc140esn", "mfc140fra", "mfc140ita", "mfc140jpn", "mfc140kor", "mfc140rus", "mfc140u", "mfcm140", "mfcm140u", "msvcp140", "msvcp140_1", "msvcp140_2", "msvcp140_atomic_wait", "msvcp140_codecvt_ids", "vcamp140", "vccorlib140", "vcomp140", "vcruntime140", "vcruntime140_1", "vcruntime140_threads"],
+        "restoreBuiltinDlls": true
+    },
     "wmdecoder" : {
         "dlnames": ["wmvcore", "wmasf", "wmadmod", "wmvdecod"],
         "restoreBuiltinDlls": true

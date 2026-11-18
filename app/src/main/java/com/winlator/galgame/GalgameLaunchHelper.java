@@ -37,11 +37,18 @@ public final class GalgameLaunchHelper {
         if (exe != null) {
             // 非 ASCII exe 名的启动一律走 ASCII 别名（ensureEngineRuntime 已建好硬链接）
             exe = resolveLaunchExe(container, exe);
+            // P0-4：一次启动 = 一个会话文件；X_SERVER_READY / WINE_STARTED / FIRST_FRAME
+            // 由 XServerComponent / GuestProgramLauncherComponent / WindowManager 打点。
+            GalgameLaunchSession.begin(container, exe);
             intent.putExtra("exec_path", exe);
             // 日文 exe 名直接作为宿主路径交给 wine 会打不开（loader 按 ANSI 打开宿主路径），
             // 另带一份 C:\ 路径供启动命令使用；宿主路径仍用于工作目录。
             String winePath = toWindowsPath(container, exe);
             if (winePath != null) intent.putExtra(EXTRA_EXEC_PATH_WINE, escapeSpaces(winePath));
+        }
+        else {
+            // 非 galgame 容器（或 overlay 损坏）：清掉上一个容器的活动会话，避免诊断串台
+            GalgameLaunchSession.clear();
         }
     }
 
@@ -160,6 +167,11 @@ public final class GalgameLaunchHelper {
     /** 非 ASCII 主程序别名（同目录硬链接）：绕过 wine 启动器早期按 ANSI 码页解析主程序
      *  路径导致的非 ASCII 文件名打不开（真机 BGI 实测，见 docs/fullscreen-fix-retrospective.md）。 */
     private static final String LAUNCH_ALIAS_NAME = "gs_launch.exe";
+
+    /** 供 rcfile 段名复用：box64 实际启动的是别名，段名必须跟实际 exe 名一致。 */
+    static String launchAliasName() {
+        return LAUNCH_ALIAS_NAME;
+    }
 
     /**
      * 启动前运行环境自愈（幂等，WinlatorContainerEngine.launch 调用，毫秒级）：

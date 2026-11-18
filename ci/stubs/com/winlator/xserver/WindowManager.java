@@ -6,7 +6,9 @@ public class WindowManager {
     public interface OnWindowModificationListener {
         default void onMapWindow(Window window) {}
         default void onUnmapWindow(Window window) {}
+        default void onUpdateWindowContent(Window window) {}
     }
 
     public void addOnWindowModificationListener(OnWindowModificationListener listener) {}
+    public void removeOnWindowModificationListener(OnWindowModificationListener listener) {}
 }

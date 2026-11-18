@@ -16,6 +16,8 @@ import com.winlator.core.FileUtils;
 import com.winlator.core.GeneralComponents;
 import com.winlator.core.LocaleHelper;
 import com.winlator.core.ProcessHelper;
+import com.winlator.galgame.GalgameBox64Rc;
+import com.winlator.galgame.GalgameLaunchSession;
 import com.winlator.widget.LogView;
 import com.winlator.xconnector.UnixSocketConfig;
 import com.winlator.xenvironment.EnvironmentComponent;
@@ -43,6 +45,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
             extractBox64File();
             copyDefaultBox64RCFile();
             pid = execGuestProgram();
+            // P0-4：fork 出 pid 才记 WINE_STARTED（失败时 pid<=0，不记）
+            if (pid > 0) GalgameLaunchSession.mark(GalgameLaunchSession.WINE_STARTED, "pid=" + pid);
         }
     }
 
@@ -52,6 +56,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
             if (pid != -1) {
                 Process.killProcess(pid);
                 pid = -1;
+                // P0-4：主动停止与异常退出分开记，诊断里能区分「用户退出」和「进程崩了」
+                GalgameLaunchSession.mark(GalgameLaunchSession.STOPPED);
             }
         }
     }
@@ -131,6 +137,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
             synchronized (lock) {
                 pid = -1;
             }
+            // P0-4：wine 退出时把 status 落进会话文件，诊断可直接看到「非 0 退出」
+            GalgameLaunchSession.mark(GalgameLaunchSession.EXITED, "status=" + status);
             if (terminationCallback != null) terminationCallback.call(status);
         });
     }
@@ -150,7 +158,12 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
     private void copyDefaultBox64RCFile() {
         Context context = environment.getContext();
         RootFS rootFS = environment.getRootFS();
-        FileUtils.copy(context, "box64/default.box64rc", new File(rootFS.getRootDir(), "/etc/config.box64rc"));
+        File dstFile = new File(rootFS.getRootDir(), "/etc/config.box64rc");
+        FileUtils.copy(context, "box64/default.box64rc", dstFile);
+        // P0-1：必须「先拷上游、再追加」——上游对 steam.exe / steamwebhelper.exe / farcry3.exe
+        // 等段的修复不能丢。workingDirOverride 只在 galgame 直启路线被设置；普通容器为 null，
+        // appendFor 找不到 galgame_overlay.json 会静默返回，行为与改动前一致。
+        GalgameBox64Rc.appendFor(context, dstFile, workingDirOverride);
     }
 
     private void addBox64EnvVars(EnvVars envVars) {

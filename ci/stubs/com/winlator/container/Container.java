@@ -18,8 +18,14 @@ public class Container {
     public void setScreenSize(String screenSize) {}
     public String getGraphicsDriver() { return ""; }
     public String getDXWrapper() { return ""; }
+    public void setDXWrapper(String dxwrapper) {}
+    public String getDXWrapperConfig() { return ""; }
+    public void setDXWrapperConfig(String dxwrapperConfig) {}
     public String getAudioDriver() { return ""; }
     public String getWinComponents() { return ""; }
+    public void setWinComponents(String wincomponents) {}
     public String getBox64Preset() { return ""; }
+    public void setBox64Preset(String box64Preset) {}
+    public String getWineVersion() { return ""; }
     public byte getStartupSelection() { return 0; }
 }
